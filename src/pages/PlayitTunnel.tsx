@@ -83,26 +83,26 @@ export default function PlayitTunnel({ serverId }: { serverId: string }) {
     >
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
             <Globe className="w-6 h-6 text-indigo-400" />
             Playit Tunnel
           </h1>
-          <p className="text-zinc-400">
+          <p className="text-muted-foreground">
             Generate and manage your global Playit tunnel to expose services directly from the panel.
           </p>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-6 shadow-sm">
+        <div className="bg-muted-subtle border border-border-subtle rounded-xl p-6 shadow-sm">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-white mb-1">Tunnel Status</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-1">Tunnel Status</h2>
               <div className="flex items-center gap-2">
                 {status === "checking" ? (
-                  <><Loader2 className="w-4 h-4 text-zinc-400 animate-spin" /><span className="text-zinc-400">Checking...</span></>
+                  <><Loader2 className="w-4 h-4 text-muted-foreground animate-spin" /><span className="text-muted-foreground">Checking...</span></>
                 ) : status === "running" ? (
                   <><span className="flex h-2.5 w-2.5 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span><span className="text-emerald-400 font-medium">Running</span></>
                 ) : (
-                  <><span className="flex h-2.5 w-2.5 relative"><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-zinc-600"></span></span><span className="text-zinc-400 font-medium">Stopped</span></>
+                  <><span className="flex h-2.5 w-2.5 relative"><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-zinc-600"></span></span><span className="text-muted-foreground font-medium">Stopped</span></>
                 )}
               </div>
             </div>
@@ -112,7 +112,7 @@ export default function PlayitTunnel({ serverId }: { serverId: string }) {
                 <button 
                   onClick={generateTunnel}
                   disabled={isProcessing || status === "checking"}
-                  className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                  className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
                 >
                   {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                   <span>Generate Tunnel</span>
@@ -160,7 +160,7 @@ export default function PlayitTunnel({ serverId }: { serverId: string }) {
                 href={claimLink} 
                 target="_blank" 
                 rel="noreferrer"
-                className="px-4 py-2 bg-emerald-500 text-white font-medium rounded-lg text-sm hover:bg-emerald-600 transition-colors shrink-0 text-center shadow-sm"
+                className="px-4 py-2 bg-emerald-500 text-foreground font-medium rounded-lg text-sm hover:bg-emerald-600 transition-colors shrink-0 text-center shadow-sm"
               >
                 Claim Agent
               </a>
@@ -168,11 +168,11 @@ export default function PlayitTunnel({ serverId }: { serverId: string }) {
           )}
         </div>
 
-        <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-4 shadow-sm flex flex-col h-[400px]">
-          <h3 className="text-sm font-semibold text-zinc-400 mb-3 flex items-center gap-2">
+        <div className="bg-card border border-border-subtle rounded-xl p-4 shadow-sm flex flex-col h-[400px]">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
             Terminal Output
           </h3>
-          <div className="flex-1 bg-black/50 rounded-lg p-3 font-mono text-[13px] text-zinc-300 overflow-y-auto whitespace-pre-wrap border border-white/[0.02]">
+          <div className="flex-1 bg-background rounded-lg p-3 font-mono text-[13px] text-foreground-muted overflow-y-auto whitespace-pre-wrap border border-border-subtle">
             {logs || "Waiting for output..."}
           </div>
         </div>

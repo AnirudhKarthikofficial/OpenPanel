@@ -32,12 +32,12 @@ export default function PlayerManager({ serverId, players }: { serverId: string,
           </div>
         ) : (
           players.map((player) => (
-            <div key={player.name} className="px-4 py-2.5 flex flex-col gap-2 hover:bg-white/[0.02] border-t border-white/[0.03] first:border-t-0 transition-colors">
+            <div key={player.name} className="px-4 py-2.5 flex flex-col gap-2 hover:bg-muted-subtle border-t border-border-subtle first:border-t-0 transition-colors">
               <div className="flex items-center gap-2">
                 <img 
                   src={`https://minotar.net/avatar/${player.name}/32.png`} 
                   alt={player.name}
-                  className="w-8 h-8 rounded-sm bg-[#0a0f16] shrink-0 border border-white/10"
+                  className="w-8 h-8 rounded-sm bg-card shrink-0 border border-border"
                   onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABW71eEAAAARElEQVR42mP8/58BDBjhGqgEho+B4aNg+BgYPgYqMECnEQ9s2IDiH2w4j6QY9EEDX8n20AdVDPqggS/4+tEHDXzB1w8AYU7y34W8vU0AAAAASUVORK5CYII='; }}
                 />
                 <span className="qx-display font-semibold text-slate-200 text-base truncate">{player.name}</span>

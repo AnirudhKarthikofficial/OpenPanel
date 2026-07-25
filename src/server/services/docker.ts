@@ -285,9 +285,10 @@ export const attachContainerSocket = async (containerId: string, serverId: strin
 };
 
 export const sendContainerCommand = async (containerId: string, command: string) => {
+
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");
-    io.to(`server_${id}`).emit("log", `> ${command}\r\n`);
+    // Handled by client local echo
     return;
   }
   if (activeStreams[containerId]) {

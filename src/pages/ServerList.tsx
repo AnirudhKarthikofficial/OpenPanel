@@ -18,7 +18,7 @@ import {
 } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { Server, Plus, ChevronRight, Settings } from "lucide-react";
+import { Server, Plus, ChevronRight, Settings, Lock } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import ServerLiveStats from "../components/ServerLiveStats";
@@ -34,6 +34,7 @@ interface ServerRecord {
   ram?: number;
   disk?: number;
   version?: string;
+  suspended?: boolean;
 }
 
 interface ServersState {
@@ -113,7 +114,7 @@ const StatusBadge = memo(function StatusBadge({
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide ${
         online
           ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-inset ring-emerald-500/20"
-          : "bg-white/[0.04] text-zinc-400 ring-1 ring-inset ring-white/10"
+          : "bg-muted text-muted-foreground ring-1 ring-inset ring-border"
       }`}
     >
       <span className="relative flex h-1.5 w-1.5">
@@ -135,10 +136,10 @@ const StatusBadge = memo(function StatusBadge({
 function Metric({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
+      <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </p>
-      <div className="font-mono text-sm font-semibold text-zinc-100">
+      <div className="font-mono text-sm font-semibold text-foreground">
         {children}
       </div>
     </div>
@@ -152,61 +153,83 @@ const ServerCard = memo(function ServerCard({
   server: ServerRecord;
 }) {
   const online = isOnline(server.status);
-  return (
-    <motion.article variants={itemVariants}>
-      <Link
-        to={`/servers/${server.id}`}
-        className="group relative block overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 transition-colors duration-200 hover:border-white/[0.12] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 md:p-6"
-      >
-        {/* 6.1 · Status edge-light */}
-        <div
-          className={`pointer-events-none absolute inset-x-0 top-0 h-px ${
-            online
-              ? "bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent"
-              : "bg-gradient-to-r from-transparent via-white/15 to-transparent"
-          }`}
-        />
-        {/* 6.2 · Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-zinc-400 transition-colors group-hover:border-white/[0.14] group-hover:text-zinc-100">
-              <Server className="h-6 w-6" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-semibold tracking-tight text-white">
-                {server.name}
-              </h2>
-              <div className="mt-1.5">
-                <StatusBadge status={server.status} />
-              </div>
+  const isSuspended = server.suspended;
+
+  const content = (
+    <>
+      {/* 6.1 · Status edge-light */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-px ${
+          online
+            ? "bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent"
+            : "bg-gradient-to-r from-transparent via-white/15 to-transparent"
+        }`}
+      />
+      {/* 6.2 · Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground transition-colors group-hover:border-border-strong group-hover:text-foreground">
+            <Server className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold tracking-tight text-foreground">
+              {server.name}
+            </h2>
+            <div className="mt-1.5 flex items-center gap-2">
+              <StatusBadge status={server.status} />
+              {isSuspended && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-red-400 uppercase">
+                  <Lock className="h-3 w-3" />
+                  Suspended
+                </span>
+              )}
             </div>
           </div>
-          <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-zinc-600 transition-all group-hover:translate-x-0.5 group-hover:text-zinc-300" />
         </div>
-        {/* 6.3 · Metrics */}
-        <div className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-white/[0.06] bg-black/20 px-4 py-4 sm:grid-cols-4">
-          <Metric label="CPU Limit">
-            {server.cpu ?? DEFAULT_CPU}
-            <span className="ml-0.5 text-zinc-500">%</span>
-          </Metric>
-          <Metric label="RAM Usage">
-            <ServerLiveStats
-              serverId={server.id}
-              limitRam={server.ram}
-              status={server.status}
-            />
-          </Metric>
-          <Metric label="Disk Limit">
-            {server.disk ?? DEFAULT_DISK}
-            <span className="ml-0.5 text-zinc-500">GB</span>
-          </Metric>
-          <Metric label="Version">
-            <span className="block truncate" title={server.version}>
-              {server.version ?? "—"}
-            </span>
-          </Metric>
+        {!isSuspended && (
+          <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-foreground-muted" />
+        )}
+      </div>
+      {/* 6.3 · Metrics */}
+      <div className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-border-subtle bg-muted px-4 py-4 sm:grid-cols-4">
+        <Metric label="CPU Limit">
+          {server.cpu ?? DEFAULT_CPU}
+          <span className="ml-0.5 text-muted-foreground">%</span>
+        </Metric>
+        <Metric label="RAM Usage">
+          <ServerLiveStats
+            serverId={server.id}
+            limitRam={server.ram}
+            status={server.status}
+          />
+        </Metric>
+        <Metric label="Disk Limit">
+          {server.disk ?? DEFAULT_DISK}
+          <span className="ml-0.5 text-muted-foreground">GB</span>
+        </Metric>
+        <Metric label="Version">
+          <span className="block truncate" title={server.version}>
+            {server.version ?? "—"}
+          </span>
+        </Metric>
+      </div>
+    </>
+  );
+
+  return (
+    <motion.article variants={itemVariants}>
+      {isSuspended ? (
+        <div className="group relative block overflow-hidden rounded-2xl border border-red-500/10 bg-black/40 dark:bg-black/40 p-5 opacity-75 md:p-6 cursor-not-allowed">
+          {content}
         </div>
-      </Link>
+      ) : (
+        <Link
+          to={`/servers/${server.id}`}
+          className="group relative block overflow-hidden rounded-2xl border border-border-subtle bg-muted-subtle p-5 transition-colors duration-200 hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 md:p-6"
+        >
+          {content}
+        </Link>
+      )}
     </motion.article>
   );
 });
@@ -219,10 +242,10 @@ function LoadingState() {
       style={{ backgroundColor: SURFACE }}
     >
       <div
-        className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-white/70"
+        className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-white/70"
         aria-hidden
       />
-      <p className="text-sm font-medium text-zinc-500">Loading instances…</p>
+      <p className="text-sm font-medium text-muted-foreground">Loading instances…</p>
     </div>
   );
 }
@@ -231,22 +254,22 @@ function EmptyState({ isAdmin }: { isAdmin: boolean }) {
   return (
     <motion.div
       variants={itemVariants}
-      className="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.01] px-6 py-24 text-center"
+      className="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted-subtle px-6 py-24 text-center"
     >
-      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03]">
-        <Server className="h-6 w-6 text-zinc-500" />
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl border border-border bg-muted">
+        <Server className="h-6 w-6 text-muted-foreground" />
       </div>
-      <h3 className="text-base font-semibold text-white">
+      <h3 className="text-base font-semibold text-foreground">
         No instances running
       </h3>
-      <p className="mt-1 max-w-sm text-sm text-zinc-500">
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
         You haven&apos;t deployed any servers yet. Create one to start managing
         your game instances.
       </p>
       {isAdmin && (
         <Link
           to="/servers/create"
-          className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-black transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070708]"
+          className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--btn-primary-bg)] px-4 text-sm font-semibold text-[var(--btn-primary-text)] transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070708]"
         >
           <Plus className="h-4 w-4" />
           Deploy your first server
@@ -283,20 +306,20 @@ export default function ServerList() {
   // 8.4 · Full page.
   return (
     <div
-      className="relative min-h-screen text-zinc-100"
+      className="relative min-h-screen text-foreground"
       style={{ backgroundColor: SURFACE }}
     >
       <div className="relative mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-10">
         {/* 8.4a · Header */}
-        <header className="mb-8 flex flex-col gap-4 border-b border-white/[0.07] pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <header className="mb-8 flex flex-col gap-4 border-b border-border-subtle pb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">
+            <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Infrastructure
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight text-white">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Instances
             </h1>
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               {hasServers
                 ? `${onlineCount} of ${servers.length} online · Manage and monitor your fleet.`
                 : "Manage and monitor your server fleet."}
@@ -306,14 +329,14 @@ export default function ServerList() {
             <div className="flex gap-2">
               <Link
                 to="/admin/servers"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-zinc-800 px-4 text-sm font-semibold text-white transition-colors hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070708]"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-zinc-800 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070708]"
               >
                 <Settings className="h-4 w-4" />
                 Manage
               </Link>
               <Link
                 to="/servers/create"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-black transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070708]"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--btn-primary-bg)] px-4 text-sm font-semibold text-[var(--btn-primary-text)] transition-colors hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070708]"
               >
                 <Plus className="h-4 w-4" />
                 New Instance

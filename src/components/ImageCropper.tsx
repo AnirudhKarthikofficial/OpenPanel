@@ -34,15 +34,15 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel, aspectRatio =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden w-full max-w-md shadow-2xl">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">{title}</h3>
-          <button onClick={onCancel} className="text-zinc-400 hover:text-white transition-colors">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden w-full max-w-md shadow-2xl">
+        <div className="p-4 border-b border-border-subtle flex items-center justify-between">
+          <h3 className="text-lg font-bold text-foreground">{title}</h3>
+          <button onClick={onCancel} className="text-muted-foreground hover:text-foreground transition-colors">
             <X size={20} />
           </button>
         </div>
         
-        <div className="relative w-full h-80 bg-black/50">
+        <div className="relative w-full h-80 bg-background">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -54,25 +54,25 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel, aspectRatio =
           />
         </div>
         
-        <div className="p-4 bg-white/[0.02]">
+        <div className="p-4 bg-muted-subtle">
           
           {title === "Crop Background" && (
             <div className="flex gap-2 mb-4">
               <button 
                 onClick={() => setCurrentAspect(16/9)}
-                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${currentAspect === 16/9 ? "bg-indigo-500 text-white" : "bg-white/5 text-zinc-400 hover:bg-white/10"}`}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${currentAspect === 16/9 ? "bg-indigo-500 text-foreground" : "bg-muted text-muted-foreground hover:bg-muted-hover"}`}
               >
                 16:9 (PC)
               </button>
               <button 
                 onClick={() => setCurrentAspect(9/16)}
-                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${currentAspect === 9/16 ? "bg-indigo-500 text-white" : "bg-white/5 text-zinc-400 hover:bg-white/10"}`}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${currentAspect === 9/16 ? "bg-indigo-500 text-foreground" : "bg-muted text-muted-foreground hover:bg-muted-hover"}`}
               >
                 9:16 (Mobile)
               </button>
             </div>
           )}
-          <label className="block text-sm text-zinc-400 mb-2">Zoom</label>
+          <label className="block text-sm text-muted-foreground mb-2">Zoom</label>
 
           <input
             type="range"
@@ -88,13 +88,13 @@ export function ImageCropper({ imageSrc, onCropComplete, onCancel, aspectRatio =
           <div className="mt-6 flex gap-3 justify-end">
             <button 
               onClick={onCancel}
-              className="px-4 py-2 text-zinc-400 hover:text-white font-medium rounded-xl transition-colors"
+              className="px-4 py-2 text-muted-foreground hover:text-foreground font-medium rounded-xl transition-colors"
             >
               Cancel
             </button>
             <button 
               onClick={showCroppedImage}
-              className="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)] flex items-center gap-2"
+              className="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground font-semibold rounded-xl transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)] flex items-center gap-2"
             >
               <Check size={18} /> Apply
             </button>

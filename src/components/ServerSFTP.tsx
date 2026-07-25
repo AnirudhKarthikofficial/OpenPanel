@@ -82,11 +82,11 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
     <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2 flex items-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center">
             <Network className="w-6 h-6 mr-3 text-indigo-400" />
             SFTP Details
           </h2>
-          <p className="text-zinc-400">Manage your secure file transfer protocol (SFTP) access credentials.</p>
+          <p className="text-muted-foreground">Manage your secure file transfer protocol (SFTP) access credentials.</p>
         </div>
 
         {error && (
@@ -97,17 +97,17 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
         )}
 
         {!sftpInfo ? (
-          <div className="qx-glass border border-white/[0.07] p-8 rounded-2xl flex flex-col items-center justify-center text-center">
+          <div className="qx-glass border border-border-subtle p-8 rounded-2xl flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-4 border border-indigo-500/20">
               <ShieldCheck className="w-8 h-8 text-indigo-400" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No SFTP Account Found</h3>
-            <p className="text-zinc-400 max-w-md mb-6">
+            <h3 className="text-xl font-bold text-foreground mb-2">No SFTP Account Found</h3>
+            <p className="text-muted-foreground max-w-md mb-6">
               An SFTP account has not been provisioned for this server yet. Create one now to securely manage your server files.
             </p>
             <button
               onClick={createSftpAccount}
-              className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
+              className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-foreground font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
             >
               Generate SFTP Credentials
             </button>
@@ -115,70 +115,70 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <div className="qx-glass border border-white/[0.07] rounded-2xl p-6 relative overflow-hidden group">
+              <div className="qx-glass border border-border-subtle rounded-2xl p-6 relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                <h3 className="text-lg font-bold text-foreground mb-6 flex items-center">
                   <Key className="w-5 h-5 mr-2 text-indigo-400" /> Connection Info
                 </h3>
                 
                 <div className="space-y-5 relative z-10">
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Host</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Host</label>
                     <div className="flex">
-                      <div className="flex-1 bg-white/[0.03] border border-white/[0.08] border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm text-zinc-200 truncate">
+                      <div className="flex-1 bg-muted border border-border border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm text-foreground-muted truncate">
                         {sftpInfo.host}
                       </div>
                       <button 
                         onClick={() => handleCopy(sftpInfo.host, 'host')}
-                        className="px-4 bg-white/5 border border-white/10 rounded-r-xl hover:bg-white/10 transition-colors flex items-center justify-center"
+                        className="px-4 bg-muted border border-border rounded-r-xl hover:bg-muted-hover transition-colors flex items-center justify-center"
                       >
-                        {copiedField === 'host' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+                        {copiedField === 'host' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Port</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Port</label>
                     <div className="flex">
-                      <div className="flex-1 bg-white/[0.03] border border-white/[0.08] border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm text-zinc-200">
+                      <div className="flex-1 bg-muted border border-border border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm text-foreground-muted">
                         {sftpInfo.port}
                       </div>
                       <button 
                         onClick={() => handleCopy(sftpInfo.port.toString(), 'port')}
-                        className="px-4 bg-white/5 border border-white/10 rounded-r-xl hover:bg-white/10 transition-colors flex items-center justify-center"
+                        className="px-4 bg-muted border border-border rounded-r-xl hover:bg-muted-hover transition-colors flex items-center justify-center"
                       >
-                        {copiedField === 'port' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+                        {copiedField === 'port' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Username</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Username</label>
                     <div className="flex">
-                      <div className="flex-1 bg-white/[0.03] border border-white/[0.08] border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm text-zinc-200 truncate">
+                      <div className="flex-1 bg-muted border border-border border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm text-foreground-muted truncate">
                         {sftpInfo.username}
                       </div>
                       <button 
                         onClick={() => handleCopy(sftpInfo.username, 'username')}
-                        className="px-4 bg-white/5 border border-white/10 rounded-r-xl hover:bg-white/10 transition-colors flex items-center justify-center"
+                        className="px-4 bg-muted border border-border rounded-r-xl hover:bg-muted-hover transition-colors flex items-center justify-center"
                       >
-                        {copiedField === 'username' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+                        {copiedField === 'username' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Password</label>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Password</label>
                     {sftpInfo.password.startsWith("(Hidden") ? (
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <div className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 font-mono text-sm text-zinc-500 italic flex items-center justify-between">
+                        <div className="flex-1 bg-muted border border-border rounded-xl px-4 py-3 font-mono text-sm text-muted-foreground italic flex items-center justify-between">
                           <span>••••••••••••••••</span>
-                          <Lock className="w-4 h-4 text-zinc-600" />
+                          <Lock className="w-4 h-4 text-muted-foreground" />
                         </div>
                         <button
                           onClick={resetPassword}
                           disabled={isResetting}
-                          className="px-5 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20 flex items-center justify-center shrink-0 disabled:opacity-50"
+                          className="px-5 py-3 bg-indigo-500 hover:bg-indigo-600 text-foreground font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20 flex items-center justify-center shrink-0 disabled:opacity-50"
                         >
                           {isResetting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                           Generate Password
@@ -186,12 +186,12 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
                       </div>
                     ) : (
                       <div className="flex">
-                        <div className="flex-1 bg-white/[0.03] border border-white/[0.08] border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm truncate text-emerald-400 font-bold bg-emerald-500/5">
+                        <div className="flex-1 bg-muted border border-border border-r-0 rounded-l-xl px-4 py-3 font-mono text-sm truncate text-emerald-400 font-bold bg-emerald-500/5">
                           {showPassword ? sftpInfo.password : "••••••••••••••••"}
                         </div>
                         <button 
                           onClick={() => setShowPassword(!showPassword)}
-                          className="px-4 bg-white/5 border border-emerald-500/20 border-r-0 hover:bg-white/10 transition-colors flex items-center justify-center text-emerald-400"
+                          className="px-4 bg-muted border border-emerald-500/20 border-r-0 hover:bg-muted-hover transition-colors flex items-center justify-center text-emerald-400"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -204,7 +204,7 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
                       </div>
                     )}
                     {sftpInfo.password.startsWith("(Hidden") && (
-                      <p className="text-[11px] text-zinc-500 mt-2 flex items-center">
+                      <p className="text-[11px] text-muted-foreground mt-2 flex items-center">
                         <AlertTriangle className="w-3 h-3 mr-1" /> For security, passwords are not stored. Generate a new one to connect.
                       </p>
                     )}
@@ -221,7 +221,7 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
                 <h3 className="text-orange-400 font-bold mb-2 flex items-center">
                   <AlertTriangle className="w-5 h-5 mr-2" /> Security
                 </h3>
-                <p className="text-sm text-zinc-400 mb-4 leading-relaxed">
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                   If you believe your SFTP credentials have been compromised, you can generate a new secure password. This will immediately disconnect any active sessions.
                 </p>
                 <button
@@ -236,14 +236,14 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
             </div>
 
             <div className="space-y-6">
-              <div className="qx-glass border border-white/[0.07] rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-white mb-4">How to connect</h3>
-                <div className="space-y-4 text-sm text-zinc-400 leading-relaxed">
+              <div className="qx-glass border border-border-subtle rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-foreground mb-4">How to connect</h3>
+                <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
                   <p>
                     You can connect to your server's files using an SFTP client such as <a href="https://filezilla-project.org/" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">FileZilla</a>, <a href="https://winscp.net/" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">WinSCP</a>, or <a href="https://cyberduck.io/" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">Cyberduck</a>.
                   </p>
-                  <div className="p-4 bg-black/40 border border-white/5 rounded-xl">
-                    <p className="font-semibold text-zinc-300 mb-2">Quick steps:</p>
+                  <div className="p-4 bg-black/40 dark:bg-black/40 border border-border-subtle rounded-xl">
+                    <p className="font-semibold text-foreground-muted mb-2">Quick steps:</p>
                     <ol className="list-decimal pl-4 space-y-2">
                       <li>Open your preferred SFTP client.</li>
                       <li>Copy and paste the <strong>Host</strong> and <strong>Port</strong>.</li>
@@ -278,8 +278,8 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
                   <AlertTriangle className="w-6 h-6 text-orange-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Reset SFTP Password</h3>
-                  <p className="text-zinc-400 text-sm leading-relaxed">
+                  <h3 className="text-xl font-bold text-foreground mb-1">Reset SFTP Password</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     Are you sure you want to reset your SFTP password? The old password will immediately become invalid and any active sessions will be disconnected.
                   </p>
                 </div>
@@ -287,7 +287,7 @@ export default function ServerSFTP({ serverId, server }: { serverId: string, ser
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   onClick={() => setShowConfirmReset(false)}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl transition-colors"
+                  className="px-4 py-2 bg-muted hover:bg-muted-hover text-foreground font-medium rounded-xl transition-colors"
                 >
                   Cancel
                 </button>

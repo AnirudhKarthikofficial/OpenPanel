@@ -62,13 +62,13 @@ export default function ApiKeysManager() {
   };
 
   if (isLoading) {
-    return <div className="text-zinc-500 animate-pulse">Loading API keys...</div>;
+    return <div className="text-muted-foreground animate-pulse">Loading API keys...</div>;
   }
 
   return (
-    <div className="bg-[#0a0a0c] border border-white/5 rounded-2xl p-6 md:p-8 shadow-xl mt-8">
+    <div className="bg-card border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl mt-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-xl font-bold flex items-center text-white">
+        <h2 className="text-xl font-bold flex items-center text-foreground">
           <Key className="mr-3 text-indigo-400 w-5 h-5" /> API Keys
         </h2>
         <button 
@@ -76,7 +76,7 @@ export default function ApiKeysManager() {
             setNewKeyString(null);
             setShowAddModal(true);
           }}
-          className="flex items-center space-x-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition-all shadow-sm"
+          className="flex items-center space-x-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground font-medium rounded-xl transition-all shadow-sm"
         >
           <Plus size={18} />
           <span>Generate Key</span>
@@ -86,9 +86,9 @@ export default function ApiKeysManager() {
       {newKeyString && !showAddModal && (
         <div className="mb-6 bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4">
           <h3 className="text-indigo-400 font-bold mb-2">New API Key Generated!</h3>
-          <p className="text-zinc-300 text-sm mb-3">Please copy this key now. You will not be able to see it again.</p>
+          <p className="text-foreground-muted text-sm mb-3">Please copy this key now. You will not be able to see it again.</p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 bg-black/40 text-white px-3 py-2 rounded-lg font-mono text-sm break-all">
+            <code className="flex-1 bg-black/40 dark:bg-black/40 text-foreground px-3 py-2 rounded-lg font-mono text-sm break-all">
               {newKeyString}
             </code>
             <button 
@@ -102,19 +102,19 @@ export default function ApiKeysManager() {
       )}
 
       {apiKeys.length === 0 ? (
-        <div className="text-center p-8 border border-white/5 bg-white/[0.02] rounded-xl">
-          <p className="text-zinc-500 text-sm">No API keys generated yet.</p>
+        <div className="text-center p-8 border border-border-subtle bg-muted-subtle rounded-xl">
+          <p className="text-muted-foreground text-sm">No API keys generated yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {apiKeys.map(key => (
-            <div key={key.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl transition-colors ${key.revoked ? 'opacity-50' : 'hover:bg-white/[0.04]'}`}>
+            <div key={key.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted-subtle border border-border-subtle rounded-xl transition-colors ${key.revoked ? 'opacity-50' : 'hover:bg-muted'}`}>
               <div className="mb-3 sm:mb-0">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-white">{key.label}</h4>
+                  <h4 className="font-medium text-foreground">{key.label}</h4>
                   {key.revoked && <span className="text-[10px] uppercase font-bold tracking-wider bg-red-500/20 text-red-400 px-2 py-0.5 rounded">Revoked</span>}
                 </div>
-                <div className="text-xs text-zinc-500 mt-1 flex flex-col sm:flex-row sm:gap-4">
+                <div className="text-xs text-muted-foreground mt-1 flex flex-col sm:flex-row sm:gap-4">
                   <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
                   <span>Last used: {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Never'}</span>
                 </div>
@@ -122,7 +122,7 @@ export default function ApiKeysManager() {
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => handleDeleteKey(key.id)}
-                  className="p-1.5 text-zinc-500 bg-white/[0.03] border border-transparent hover:border-red-500/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" 
+                  className="p-1.5 text-muted-foreground bg-muted border border-transparent hover:border-red-500/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" 
                   title="Delete Key"
                 >
                   <Trash2 size={16} />
@@ -141,24 +141,24 @@ export default function ApiKeysManager() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#121214] border border-white/10 shadow-2xl rounded-2xl w-full max-w-md overflow-hidden flex flex-col"
+              className="bg-[#121214] border border-border shadow-2xl rounded-2xl w-full max-w-md overflow-hidden flex flex-col"
             >
-              <div className="flex items-center justify-between p-5 border-b border-white/5 bg-black/20">
-                <h3 className="text-lg font-bold text-white">Generate API Key</h3>
-                <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
+              <div className="flex items-center justify-between p-5 border-b border-border-subtle bg-muted">
+                <h3 className="text-lg font-bold text-foreground">Generate API Key</h3>
+                <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                   <Trash2 size={20} className="opacity-0" /> {/* Spacer */}
                 </button>
               </div>
               
               <form onSubmit={handleCreateKey} className="p-5">
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-zinc-400 mb-2">Key Label (Optional)</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Key Label (Optional)</label>
                   <input 
                     type="text" 
                     value={newKeyLabel}
                     onChange={(e) => setNewKeyLabel(e.target.value)}
                     placeholder="e.g. CI/CD Pipeline"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
+                    className="w-full bg-black/40 dark:bg-black/40 border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-indigo-500/50 transition-colors"
                   />
                 </div>
                 
@@ -166,14 +166,14 @@ export default function ApiKeysManager() {
                   <button 
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl transition-colors"
+                    className="px-4 py-2 bg-muted hover:bg-muted-hover text-foreground font-medium rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit"
                     disabled={isProcessing}
-                    className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+                    className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground font-medium rounded-xl transition-colors disabled:opacity-50"
                   >
                     {isProcessing ? "Generating..." : "Generate"}
                   </button>

@@ -103,8 +103,8 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
       <div className="max-w-4xl w-full mx-auto pb-24">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-1">Sub-Users</h2>
-            <p className="text-zinc-400 text-sm">Manage users who have access to this server.</p>
+            <h2 className="text-2xl font-bold text-foreground mb-1">Sub-Users</h2>
+            <p className="text-muted-foreground text-sm">Manage users who have access to this server.</p>
           </div>
           <button 
             onClick={() => {
@@ -113,7 +113,7 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
               setSelectedPermissions([]);
               setShowAddModal(true);
             }}
-            className="flex items-center space-x-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition-all shadow-lg shadow-indigo-500/20"
+            className="flex items-center space-x-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground font-medium rounded-xl transition-all shadow-lg shadow-indigo-500/20"
           >
             <UserPlus size={18} />
             <span>Add User</span>
@@ -121,24 +121,24 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
         </div>
 
         {subUsers.length === 0 ? (
-          <div className="bg-black/20 border border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center backdrop-blur-xl">
-            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
-              <Users size={32} className="text-zinc-500" />
+          <div className="bg-muted border border-border-subtle rounded-2xl p-8 flex flex-col items-center justify-center text-center backdrop-blur-xl">
+            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
+              <Users size={32} className="text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">No Sub-Users</h3>
-            <p className="text-zinc-400 max-w-sm mb-6 text-sm">You haven't granted access to any other users for this server yet.</p>
+            <h3 className="text-lg font-bold text-foreground mb-2">No Sub-Users</h3>
+            <p className="text-muted-foreground max-w-sm mb-6 text-sm">You haven't granted access to any other users for this server yet.</p>
           </div>
         ) : (
           <div className="grid gap-4">
             {subUsers.map((su) => (
-              <div key={su.userId} className="bg-black/40 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
+              <div key={su.userId} className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
                     <Shield className="text-indigo-400" size={24} />
                   </div>
                   <div>
-                    <h4 className="text-white font-medium text-lg">{getUsername(su.userId)}</h4>
-                    <p className="text-zinc-400 text-sm">{su.permissions.length} permissions granted</p>
+                    <h4 className="text-foreground font-medium text-lg">{getUsername(su.userId)}</h4>
+                    <p className="text-muted-foreground text-sm">{su.permissions.length} permissions granted</p>
                   </div>
                 </div>
                 
@@ -149,7 +149,7 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
                       setSelectedPermissions(su.permissions);
                       setShowAddModal(true);
                     }}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors text-sm font-medium"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-muted hover:bg-muted-hover text-foreground rounded-xl transition-colors text-sm font-medium"
                   >
                     Edit Permissions
                   </button>
@@ -175,13 +175,13 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#121214] border border-white/10 shadow-2xl rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-[#121214] border border-border shadow-2xl rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="flex items-center justify-between p-5 border-b border-white/5 bg-black/20 shrink-0">
-                <h3 className="text-lg font-bold text-white">
+              <div className="flex items-center justify-between p-5 border-b border-border-subtle bg-muted shrink-0">
+                <h3 className="text-lg font-bold text-foreground">
                   {editingUser ? `Edit Permissions for ${getUsername(editingUser.userId)}` : "Add Sub-User"}
                 </h3>
-                <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors">
+                <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                   <X size={20} />
                 </button>
               </div>
@@ -189,11 +189,11 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
               <div className="p-5 overflow-y-auto custom-scrollbar flex-1">
                 {!editingUser && (
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-zinc-400 mb-2">Select User</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Select User</label>
                     <select 
                       value={selectedUser} 
                       onChange={(e) => setSelectedUser(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
+                      className="w-full bg-black/40 dark:bg-black/40 border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-indigo-500/50 transition-colors"
                     >
                       <option value="" disabled>Choose a user...</option>
                       {unassignedUsers.map(u => (
@@ -208,7 +208,7 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-zinc-400">Permissions</label>
+                    <label className="block text-sm font-medium text-muted-foreground">Permissions</label>
                     <button 
                       onClick={() => setSelectedPermissions(ALL_PERMISSIONS.map(p => p.id))}
                       className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
@@ -225,19 +225,19 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
                           key={perm.id} 
                           onClick={() => togglePermission(perm.id)}
                           className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
-                            isSelected ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-black/20 border-white/5 hover:bg-black/40 hover:border-white/10'
+                            isSelected ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-muted border-border-subtle hover:bg-black/40 dark:bg-black/40 hover:border-border'
                           }`}
                         >
                           <div>
-                            <div className={`font-medium ${isSelected ? 'text-indigo-300' : 'text-zinc-300'}`}>
+                            <div className={`font-medium ${isSelected ? 'text-indigo-300' : 'text-foreground-muted'}`}>
                               {perm.label}
                             </div>
-                            <div className="text-xs text-zinc-500 mt-0.5">{perm.group}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{perm.group}</div>
                           </div>
                           {isSelected ? (
                             <CheckSquare className="text-indigo-400" size={20} />
                           ) : (
-                            <Square className="text-zinc-600" size={20} />
+                            <Square className="text-muted-foreground" size={20} />
                           )}
                         </div>
                       );
@@ -246,17 +246,17 @@ export default function SubUsersManager({ serverId }: SubUsersManagerProps) {
                 </div>
               </div>
 
-              <div className="p-5 border-t border-white/5 bg-black/20 flex justify-end space-x-3 shrink-0">
+              <div className="p-5 border-t border-border-subtle bg-muted flex justify-end space-x-3 shrink-0">
                 <button 
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white font-medium rounded-xl transition-colors"
+                  className="px-4 py-2 bg-muted hover:bg-muted-hover text-foreground font-medium rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleSave}
                   disabled={(!editingUser && !selectedUser) || selectedPermissions.length === 0}
-                  className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
                   <Save size={18} />
                   <span>Save</span>

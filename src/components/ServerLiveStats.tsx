@@ -18,14 +18,14 @@ export default function ServerLiveStats({ serverId, limitRam, status }: { server
   }, [serverId, status]);
 
   if (status !== 'online') {
-    return <span className="font-mono text-zinc-300 text-xs md:text-sm">{limitRam} <span className="text-zinc-500">GB</span></span>;
+    return <span className="font-mono text-foreground-muted text-xs md:text-sm">{limitRam} <span className="text-muted-foreground">GB</span></span>;
   }
 
   const liveRamGB = liveRam !== null ? (liveRam / 1024).toFixed(1) : "...";
 
   return (
-    <span className="font-mono text-zinc-300 text-xs md:text-sm">
-      {liveRamGB} <span className="text-zinc-500">/ {limitRam} GB</span>
+    <span className="font-mono text-foreground-muted text-xs md:text-sm">
+      {liveRamGB} <span className="text-muted-foreground">/ {limitRam} GB</span>
     </span>
   );
 }

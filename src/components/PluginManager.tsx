@@ -153,32 +153,32 @@ export default function PluginManager({ serverId }: { serverId: string }) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 text-white bg-transparent">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 text-foreground bg-transparent">
       <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
         
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md mb-1">Plugin Manager</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight drop-shadow-md mb-1">Plugin Manager</h2>
             <p className="text-[11px] font-bold text-indigo-400/80 uppercase tracking-widest mt-1">Search and install plugins from Modrinth, Spigot, and Paper Hangar.</p>
           </div>
         </div>
 
-        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
-          <div className="p-4 border-b border-white/5 space-y-4">
+        <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle">
+          <div className="p-4 border-b border-border-subtle space-y-4">
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search for plugins..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full bg-white/[0.02] border border-white/10 rounded-lg py-2 pl-9 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-muted-subtle border border-border rounded-lg py-2 pl-9 pr-4 text-sm text-foreground placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
               <button 
                 type="submit"
-                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0"
+                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0"
               >
                 Search
               </button>
@@ -190,7 +190,7 @@ export default function PluginManager({ serverId }: { serverId: string }) {
                   key={src}
                   type="button"
                   onClick={() => setActiveSource(src as any)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeSource === src ? 'bg-indigo-500 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 ${activeSource === src ? 'bg-indigo-500 text-foreground' : 'bg-muted text-muted-foreground hover:bg-muted-hover hover:text-foreground'}`}
                 >
                   {src === 'all' ? <Puzzle className="w-3.5 h-3.5" /> : getSourceIcon(src)}
                   {src === 'all' ? 'All Sources' : getSourceName(src)}
@@ -199,40 +199,40 @@ export default function PluginManager({ serverId }: { serverId: string }) {
             </div>
           </div>
           
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-border-subtle">
             {loading ? (
-              <div className="p-8 text-center text-zinc-500 flex flex-col items-center">
+              <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
                 <RefreshCw className="w-6 h-6 animate-spin mb-3 text-indigo-500/50" />
                 Searching repositories...
               </div>
             ) : plugins.length === 0 ? (
-              <div className="p-8 text-center text-zinc-500 flex flex-col items-center">
-                <AlertCircle className="w-8 h-8 mb-3 text-zinc-600" />
+              <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
+                <AlertCircle className="w-8 h-8 mb-3 text-muted-foreground" />
                 No plugins found.
               </div>
             ) : (
               plugins.map((plugin) => (
-                <div key={`${plugin.source}-${plugin.id}`} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-white/[0.01] transition-colors">
+                <div key={`${plugin.source}-${plugin.id}`} className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-muted-subtle transition-colors">
                   <div className="flex items-start gap-4 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0 overflow-hidden border border-white/5">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden border border-border-subtle">
                       {plugin.icon ? (
                          <img src={plugin.icon} alt={plugin.name} className="w-full h-full object-cover" />
                       ) : (
-                         <Puzzle className="w-5 h-5 text-zinc-500" />
+                         <Puzzle className="w-5 h-5 text-muted-foreground" />
                       )}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                         <h4 className="font-medium text-zinc-200 truncate">{plugin.name}</h4>
-                         <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-white/5 text-zinc-400 flex items-center gap-1">
+                         <h4 className="font-medium text-foreground-muted truncate">{plugin.name}</h4>
+                         <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-muted text-muted-foreground flex items-center gap-1">
                             {getSourceIcon(plugin.source)} {plugin.source}
                          </span>
                       </div>
-                      <p className="text-xs text-zinc-500 line-clamp-2 mt-1">{plugin.tag}</p>
-                      <div className="flex items-center gap-4 mt-2 text-[11px] text-zinc-500">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{plugin.tag}</p>
+                      <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                         {plugin.downloads > 0 && (
                           <span className="flex items-center gap-1" title="Downloads">
-                            <Download className="w-3.5 h-3.5 text-zinc-600" />
+                            <Download className="w-3.5 h-3.5 text-muted-foreground" />
                             {plugin.downloads.toLocaleString()}
                           </span>
                         )}
@@ -246,7 +246,7 @@ export default function PluginManager({ serverId }: { serverId: string }) {
                   <button
                     onClick={() => handleInstall(plugin)}
                     disabled={isInstalling !== null}
-                    className="w-full md:w-auto px-4 py-2 bg-white/5 hover:bg-indigo-500/10 border border-white/10 hover:border-indigo-500/30 text-zinc-300 hover:text-indigo-400 rounded-lg text-sm font-medium transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
+                    className="w-full md:w-auto px-4 py-2 bg-muted hover:bg-indigo-500/10 border border-border hover:border-indigo-500/30 text-foreground-muted hover:text-indigo-400 rounded-lg text-sm font-medium transition-all flex items-center justify-center shrink-0 disabled:opacity-50"
                   >
                     {isInstalling === plugin.id ? (
                       <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Installing...</>

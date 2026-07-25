@@ -169,7 +169,7 @@ export const TutorialOverlay: React.FC<{ onComplete: () => void, panelName: stri
       </h1>
 
       <div className="tutorial-modal">
-        <h2 className="text-3xl font-black text-white mb-3 tracking-wide">{steps[step].title}</h2>
+        <h2 className="text-3xl font-black text-foreground mb-3 tracking-wide">{steps[step].title}</h2>
         <p className="text-gray-200 text-lg mb-8 min-h-[60px]">{displayedText}</p>
         
         <button 

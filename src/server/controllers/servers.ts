@@ -219,6 +219,9 @@ export const startServer = async (req: Request, res: Response) => {
     }
 
     try {
+      const io = req.app.get("io");
+      if (io) io.to(`server_${id}`).emit("clear_logs");
+      
       await startContainer(server.containerId);
     } catch (startErr: any) {
       if (startErr.statusCode === 404 || (startErr.message && startErr.message.toLowerCase().includes("no such container"))) {
@@ -271,6 +274,9 @@ export const restartServer = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Not found" });
     }
     try {
+      const io = req.app.get("io");
+      if (io) io.to(`server_${id}`).emit("clear_logs");
+
       await restartContainer(server.containerId);
     } catch (startErr: any) {
       if (startErr.statusCode === 404 || (startErr.message && startErr.message.toLowerCase().includes("no such container"))) {
@@ -291,6 +297,7 @@ export const restartServer = async (req: Request, res: Response) => {
 };
 
 export const sendCommand = async (req: Request, res: Response) => {
+  
   try {
     const { id } = req.params;
     const { command } = req.body;

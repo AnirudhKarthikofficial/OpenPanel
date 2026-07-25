@@ -15,7 +15,7 @@ export function GlobalBackground() {
         transform: 'scale(1.1)', // To prevent blurred edges from showing the background behind it
       }}
     >
-      <div className="absolute inset-0 bg-black/40" /> {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-background/40" /> {/* Dark overlay for readability */}
     </div>
   );
 }

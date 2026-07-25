@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ServerList from "./pages/ServerList";
 import CreateServer from "./pages/CreateServer";
@@ -25,7 +26,7 @@ import { TutorialOverlay } from "./components/TutorialOverlay";
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="h-[100dvh] w-full flex items-center justify-center bg-transparent text-white">
+    <div className="h-[100dvh] w-full flex items-center justify-center bg-transparent text-foreground">
       <motion.div
         animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -41,9 +42,17 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
-      <div key={location.pathname.split("/")[1]} className="h-full w-full flex flex-col">
+      <motion.div 
+        key={location.pathname.split("/")[1]} 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className="h-full w-full flex flex-col"
+      >
         <Routes location={location}>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/servers" element={<ProtectedRoute><ServerList /></ProtectedRoute>} />
           <Route path="/servers/create" element={<ProtectedRoute><CreateServer /></ProtectedRoute>} />
@@ -52,7 +61,7 @@ const AnimatedRoutes = () => {
           <Route path="/api-keys" element={<ProtectedRoute><ApiKeysPage /></ProtectedRoute>} />
           <Route path="/admin/servers" element={<ProtectedRoute><AdminServers /></ProtectedRoute>} />
         </Routes>
-      </div>
+      </motion.div>
     </AnimatePresence>
   );
 };

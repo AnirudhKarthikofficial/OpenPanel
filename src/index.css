@@ -1,10 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+:root {
+  --bg-background: #030305;
+  --bg-card: #0a0a0d;
+  
+  --text-foreground: #ffffff;
+  --text-foreground-muted: #e4e4e7;
+  --text-muted-foreground: #a1a1aa;
+  
+  --border-border: rgba(255, 255, 255, 0.1);
+  --border-border-subtle: rgba(255, 255, 255, 0.05);
+  --border-border-strong: rgba(255, 255, 255, 0.2);
+  
+  --bg-muted: rgba(255, 255, 255, 0.05);
+  --bg-muted-hover: rgba(255, 255, 255, 0.1);
+  --bg-muted-subtle: rgba(255, 255, 255, 0.02);
+
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #000000;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-background: var(--bg-background);
+  --color-card: var(--bg-card);
+  
+  --color-foreground: var(--text-foreground);
+  --color-foreground-muted: var(--text-foreground-muted);
+  --color-muted-foreground: var(--text-muted-foreground);
+  
+  --color-border: var(--border-border);
+  --color-border-subtle: var(--border-border-subtle);
+  --color-border-strong: var(--border-border-strong);
+  
+  --color-muted: var(--bg-muted);
+  --color-muted-hover: var(--bg-muted-hover);
 }
+
+
+
+
 
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
@@ -15,28 +53,30 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #374151;
+    background: var(--text-foreground-muted);
     border-radius: 4px;
+    opacity: 0.5;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #4b5563;
+    background: var(--text-foreground);
   }
 }
 
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
+   -webkit-appearance: none; 
+   margin: 0; 
 }
-
 input[type=number] {
   -moz-appearance: textfield;
 }
 
-
 body {
-  background-color: #030305;
+  background-color: var(--bg-background);
+  color: var(--text-foreground);
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
+
 @keyframes qx-fade-up {
   from { opacity:0; transform:translateY(14px) scale(0.98); }
   to   { opacity:1; transform:translateY(0) scale(1); }
@@ -103,18 +143,16 @@ body {
 .qx-log-line    { animation: qx-log-in 0.2s cubic-bezier(0.22,1,0.36,1) both; }
 
 .qx-glass {
-  background: linear-gradient(135deg, rgba(10,12,20,0.85) 0%, rgba(15,18,30,0.75) 100%);
+  background: var(--bg-card);
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  opacity: 0.85;
 }
-
 .qx-gauge-track { transition: stroke-dashoffset 0.9s cubic-bezier(0.22,1,0.36,1); }
-
 .qx-input-glow:focus-within {
   border-color: rgba(56,189,248,0.5);
   box-shadow: 0 0 0 1px rgba(56,189,248,0.15), 0 0 24px -4px rgba(56,189,248,0.2), inset 0 0 12px -6px rgba(56,189,248,0.1);
 }
-
 .qx-btn-execute {
   position: relative;
   overflow: hidden;
@@ -142,7 +180,7 @@ body {
 }
 .qx-stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.5);
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,0.15);
 }
 
 .qx-console-body::-webkit-scrollbar { width:5px; }
@@ -152,11 +190,82 @@ body {
   border-radius:99px;
 }
 .qx-console-body::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.4); }
-
 .qx-grid-bg {
   background-image:
     linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
   background-size: 40px 40px;
   animation: qx-grid-scroll 12s linear infinite;
+}
+
+
+
+
+@layer base {
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  textarea,
+  select {
+    @apply bg-background border border-border rounded-xl px-4 py-2.5 text-foreground transition-all duration-200 outline-none w-full shadow-sm;
+  }
+  
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  input[type="password"]:focus,
+  textarea:focus,
+  select:focus {
+    @apply border-indigo-500 ring-2 ring-indigo-500/20 shadow-md;
+  }
+  
+  input[type="text"]:disabled,
+  input[type="number"]:disabled,
+  input[type="password"]:disabled,
+  textarea:disabled,
+  select:disabled {
+    @apply opacity-60 cursor-not-allowed bg-muted;
+  }
+
+  /* Custom Checkbox / Switch could be styled if needed, but Tailwind CSS already handles a lot */
+}
+
+/* Modal animations */
+.modal-overlay {
+  animation: qx-fade-in 0.2s ease-out;
+}
+.modal-content {
+  animation: qx-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Enhancements for light/dark theme transition */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Card hover lift */
+.card-lift {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+[data-theme="dark"] .card-lift:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+/* Button ripple / active state */
+button:not(:disabled) {
+  position: relative;
+  overflow: hidden;
+}
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Base inputs */
+input, textarea, select {
+  transition: all 0.2s ease-in-out;
 }

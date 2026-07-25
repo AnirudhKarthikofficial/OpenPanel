@@ -332,7 +332,7 @@ function Spark({
   if (pts.length < 2) {
     return (
       <div style={{ width: w, height: h }} className="flex items-end">
-        <div className="w-full border-b border-dashed border-white/10" />
+        <div className="w-full border-b border-dashed border-border" />
       </div>
     );
   }
@@ -388,7 +388,7 @@ function DriveBar({ pct }: { pct: number }) {
 
 function ConnPill({ live }: { live: boolean }) {
   return (
-    <span className="flex items-center gap-2 px-3 py-1 rounded-sm border border-white/[0.07] bg-white/[0.03]">
+    <span className="flex items-center gap-2 px-3 py-1 rounded-sm border border-border-subtle bg-muted">
       <span className="relative flex h-2 w-2">
         {live && (
           <span
@@ -444,6 +444,7 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
   const [connected, setConnected] = useState(false);
   const [ready, setReady] = useState(false);
   const [filter, setFilter] = useState<LogFilter>("all");
+  const [mobileTab, setMobileTab] = useState<"console" | "players">("console");
   const [atBottom, setAtBottom] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -518,6 +519,10 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
     socket.on("disconnect", (r: string) => {
       setConnected(false);
       setLogs((p) => [...p, `[System] Disconnected. (${r})`]);
+    });
+
+    socket.on("clear_logs", () => {
+      setLogs([]);
     });
 
     socket.on("connect_error", (e: Error) => {
@@ -611,10 +616,18 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
       setCommand("");
       setCmdHistory((h) => [cmd, ...h].slice(0, 50));
       setHistIdx(-1);
+      // Echo locally for immediate feedback
+      setLogs((p) => {
+        const next = [...p, `> ${cmd}`];
+        return next.length > MAX_LOG_LINES ? next.slice(-MAX_LOG_LINES) : next;
+      });
       try {
         await axios.post(`/api/servers/${serverId}/command`, { command: cmd });
-      } catch {
-        setLogs((p) => [...p, "[System Error] Failed to send command."]);
+      } catch (err: any) {
+        setLogs((p) => {
+          const next = [...p, `[System Error] Failed to send command: ${err.message}`];
+          return next.length > MAX_LOG_LINES ? next.slice(-MAX_LOG_LINES) : next;
+        });
       }
     },
     [command, serverId]
@@ -669,9 +682,9 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
 
     return (
       <span className={`flex-1 flex items-stretch min-w-0`}>
-        <span className={`w-[3px] shrink-0 rounded-full mr-3 self-stretch ${rail}`} />
-        <span className={`break-words whitespace-pre-wrap min-w-0 ${text}`}>
-          {ts && <span className="text-white/20 mr-2 select-none">{ts[0]}</span>}
+        <span className={`w-[2px] sm:w-[3px] shrink-0 rounded-full mr-2 sm:mr-3 self-stretch ${rail}`} />
+        <span className={`break-words whitespace-pre-wrap min-w-0 text-[11px] sm:text-xs leading-[1.6] ${text}`}>
+          {ts && <span className="text-foreground/25 mr-1.5 sm:mr-2 select-none font-mono text-[10px]">{ts[0]}</span>}
           {ts ? log.substring(ts[0].length) : log}
         </span>
       </span>
@@ -697,287 +710,339 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
     [logs, filter]
   );
 
+  const renderTelemetryPanel = () => (
+    <section className="qx-panel rounded-[24px] relative overflow-hidden">
+      {/* header */}
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-1">
+        <h2 className="qx-display text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300">
+          Telemetry & Usages
+        </h2>
+        <span className="flex items-center gap-1.5 qx-mono text-[9px] text-slate-500">
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"
+            style={{ animation: "qx-rec 2s ease-in-out infinite" }}
+          />
+          poll {STATS_POLL_MS / 1000}s
+        </span>
+      </div>
+
+      {/* CPU */}
+      <div className="qx-telemetry-row flex items-center justify-between gap-3 px-3 sm:px-4 py-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Dial pct={cpuPct} color="#34d399" glow="rgba(52,211,153,0.55)" icon={<Cpu size={15} />} armed={ready} />
+          <div className="min-w-0">
+            <p className="qx-display text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500 mb-0.5">
+              CPU Load
+            </p>
+            <p className="qx-mono text-lg sm:text-[22px] font-bold leading-none text-emerald-300">
+              <AnimNum value={stats.cpu} />
+              <span className="text-[11px] text-emerald-300/50 ml-0.5">%</span>
+            </p>
+            <p className="qx-mono text-[9px] text-slate-600 mt-1">cap {stats.limitCpu}%</p>
+          </div>
+        </div>
+        <div className="shrink-0 xs:block">
+          <Spark data={cpuHist} color="#34d399" max={stats.limitCpu || 100} w={90} />
+        </div>
+      </div>
+
+      <div className="mx-4 border-t border-border-subtle" />
+
+      {/* RAM */}
+      <div className="qx-telemetry-row flex items-center justify-between gap-3 px-3 sm:px-4 py-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Dial pct={ramPct} color="#4ade80" glow="rgba(74,222,128,0.55)" icon={<MemoryStick size={15} />} armed={ready} />
+          <div className="min-w-0">
+            <p className="qx-display text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500 mb-0.5">
+              Memory
+            </p>
+            <p className="qx-mono text-lg sm:text-[22px] font-bold leading-none text-emerald-300">
+              <AnimNum value={Math.floor(stats.ram)} decimals={0} />
+              <span className="text-[11px] text-emerald-300/50 ml-1">MB</span>
+            </p>
+            <p className="qx-mono text-[9px] text-slate-600 mt-1">cap {stats.limitRam} MB</p>
+          </div>
+        </div>
+        <div className="shrink-0 xs:block">
+          <Spark data={ramHist} color="#4ade80" max={stats.limitRam || 1024} w={90} />
+        </div>
+      </div>
+
+      <div className="mx-4 border-t border-border-subtle" />
+
+      {/* DISK */}
+      <div className="qx-telemetry-row flex items-center justify-between gap-3 px-3 sm:px-4 py-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Dial pct={diskPct} color="#fbbf24" glow="rgba(251,191,36,0.55)" icon={<HardDrive size={15} />} armed={ready} />
+          <div className="min-w-0">
+            <p className="qx-display text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500 mb-0.5">
+              Storage
+            </p>
+            <p className="qx-mono text-lg sm:text-[22px] font-bold leading-none text-amber-300">
+              <AnimNum value={stats.disk} />
+              <span className="text-[11px] text-amber-300/50 ml-1">GB</span>
+            </p>
+            <p className="qx-mono text-[9px] text-slate-600 mt-1">cap {stats.limitDisk} GB</p>
+          </div>
+        </div>
+        <div className="shrink-0 xs:block">
+          <DriveBar pct={diskPct} />
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderPlayerSection = () => (
+    <section
+      className={`flex-1 xl:min-h-0 qx-panel rounded-[24px] relative overflow-hidden flex flex-col ${
+        ready ? "qx-enter" : "opacity-0"
+      }`}
+      style={{ animationDelay: "300ms" }}
+    >
+      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+      <span className="absolute top-2.5 right-3 z-10 qx-mono text-[9px] px-2 py-0.5 rounded-sm bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 tabular-nums">
+        {players.length} online
+      </span>
+      <PlayerManager serverId={serverId} players={players} />
+    </section>
+  );
+
   /* ═══════════════════════ RENDER ═══════════════════════ */
   return (
     <>
       <style>{STYLES}</style>
-      <div className="absolute inset-0 overflow-y-auto text-white touch-auto overscroll-y-auto qx-scroll bg-transparent">
-        <div className="relative flex flex-col xl:flex-row w-full max-w-[1440px] mx-auto min-h-full gap-5 p-4 md:p-6 pb-24 md:pb-10">
-          {/* ═══════════ LEFT RAIL — TELEMETRY ═══════════ */}
+      <div className="absolute inset-0 overflow-y-auto text-foreground touch-auto overscroll-y-auto qx-scroll bg-transparent">
+        <div className="relative flex flex-col xl:flex-row w-full max-w-[1440px] mx-auto min-h-full gap-3 md:gap-5 p-3 md:p-6 pb-20 md:pb-10">
+          
+          {/* ═══════════ MOBILE VIEW SWITCHER (ONLY CONSOLE & PLAYERS) ═══════════ */}
+          <div className="flex xl:hidden items-center justify-between p-1 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md shrink-0">
+            <button
+              type="button"
+              onClick={() => setMobileTab("console")}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                mobileTab === "console"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-xs"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <XTerm size={15} />
+              <span>Console</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab("players")}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                mobileTab === "players"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-xs"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Layers size={15} />
+              <span>Players ({players.length})</span>
+            </button>
+          </div>
+
+          {/* ═══════════ DESKTOP LEFT SIDEBAR — TELEMETRY + PLAYERS ═══════════ */}
           <aside
-            className={`flex flex-col gap-5 xl:w-[380px] shrink-0 order-2 xl:order-1 ${
+            className={`hidden xl:flex flex-col gap-5 xl:w-[380px] shrink-0 order-2 xl:order-1 ${
               ready ? "qx-enter-left" : "opacity-0"
             }`}
           >
-            {/* Telemetry panel */}
-            <section className="qx-panel rounded-[24px] relative overflow-hidden">
-              
-              {/* header */}
-              <div className="flex items-center justify-between px-4 pt-3.5 pb-1">
-                <h2 className="qx-display text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300">
-                  Telemetry
-                </h2>
-                <span className="flex items-center gap-1.5 qx-mono text-[9px] text-slate-500">
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"
-                    style={{ animation: "qx-rec 2s ease-in-out infinite" }}
-                  />
-                  poll {STATS_POLL_MS / 1000}s
-                </span>
-              </div>
-
-              {/* CPU */}
-              <div className="qx-telemetry-row flex items-center gap-4 px-4 py-3.5">
-                <Dial pct={cpuPct} color="#34d399" glow="rgba(52,211,153,0.55)" icon={<Cpu size={15} />} armed={ready} />
-                <div className="flex-1 min-w-0">
-                  <p className="qx-display text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-500 mb-1">
-                    CPU Load
-                  </p>
-                  <p className="qx-mono text-[22px] font-bold leading-none text-emerald-300">
-                    <AnimNum value={stats.cpu} />
-                    <span className="text-[11px] text-emerald-300/50 ml-0.5">%</span>
-                  </p>
-                  <p className="qx-mono text-[9px] text-slate-600 mt-1">cap {stats.limitCpu}%</p>
-                </div>
-                <Spark data={cpuHist} color="#34d399" max={stats.limitCpu || 100} />
-              </div>
-
-              <div className="mx-4 border-t border-white/[0.05]" />
-
-              {/* RAM */}
-              <div className="qx-telemetry-row flex items-center gap-4 px-4 py-3.5">
-                <Dial pct={ramPct} color="#4ade80" glow="rgba(74,222,128,0.55)" icon={<MemoryStick size={15} />} armed={ready} />
-                <div className="flex-1 min-w-0">
-                  <p className="qx-display text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-500 mb-1">
-                    Memory
-                  </p>
-                  <p className="qx-mono text-[22px] font-bold leading-none text-emerald-300">
-                    <AnimNum value={Math.floor(stats.ram)} decimals={0} />
-                    <span className="text-[11px] text-emerald-300/50 ml-1">MB</span>
-                  </p>
-                  <p className="qx-mono text-[9px] text-slate-600 mt-1">cap {stats.limitRam} MB</p>
-                </div>
-                <Spark data={ramHist} color="#4ade80" max={stats.limitRam || 1024} />
-              </div>
-
-              <div className="mx-4 border-t border-white/[0.05]" />
-
-              {/* DISK */}
-              <div className="qx-telemetry-row flex items-center gap-4 px-4 py-3.5">
-                <Dial pct={diskPct} color="#fbbf24" glow="rgba(251,191,36,0.55)" icon={<HardDrive size={15} />} armed={ready} />
-                <div className="flex-1 min-w-0">
-                  <p className="qx-display text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-500 mb-1">
-                    Storage
-                  </p>
-                  <p className="qx-mono text-[22px] font-bold leading-none text-amber-300">
-                    <AnimNum value={stats.disk} />
-                    <span className="text-[11px] text-amber-300/50 ml-1">GB</span>
-                  </p>
-                  <p className="qx-mono text-[9px] text-slate-600 mt-1">cap {stats.limitDisk} GB</p>
-                </div>
-                <DriveBar pct={diskPct} />
-              </div>
-            </section>
-
-
-
-            {/* Players */}
-            <section
-              className={`flex-1 xl:min-h-0 qx-panel rounded-[24px] relative overflow-hidden flex flex-col ${
-                ready ? "qx-enter" : "opacity-0"
-              }`}
-              style={{ animationDelay: "300ms" }}
-            >
-              
-              <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
-              <span className="absolute top-2.5 right-3 z-10 qx-mono text-[9px] px-2 py-0.5 rounded-sm bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 tabular-nums">
-                {players.length} online
-              </span>
-              <PlayerManager serverId={serverId} players={players} />
-            </section>
+            {renderTelemetryPanel()}
+            {renderPlayerSection()}
           </aside>
 
-          {/* ═══════════ RIGHT — CONSOLE ═══════════ */}
-          <section
-            className={`flex flex-col flex-1 h-[64vh] xl:h-[calc(100vh-120px)] qx-panel rounded-[24px] overflow-hidden relative order-1 xl:order-2 ${
-              ready ? "qx-enter-right" : "opacity-0"
-            }`}
-            style={{
-              animationDelay: "80ms",
-              boxShadow:
-                "0 0 40px -15px rgba(0,0,0,0.5)",
-            }}
-          >
-            
+          {/* ═══════════ MOBILE PLAYERS TAB ═══════════ */}
+          <div className={`xl:hidden flex-col gap-4 order-2 ${mobileTab === "players" ? "flex" : "hidden"}`}>
+            {renderPlayerSection()}
+          </div>
 
-            {/* ── Header ── */}
-            <header className="px-4 md:px-5 py-3 flex items-center justify-between gap-3 border-b border-white/[0.05] relative z-10">
-              <div className="flex items-center gap-[7px] shrink-0">
-                {["bg-[#ff5f57]", "bg-[#febc2e]", "bg-[#28c840]"].map((c, i) => (
-                  <span
-                    key={i}
-                    className={`w-[11px] h-[11px] rounded-full ${c} opacity-80 hover:opacity-100 hover:scale-125 transition-all duration-200 cursor-default`}
-                  />
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2.5 min-w-0">
-                <XTerm size={13} className="text-emerald-400/80 shrink-0" />
-                <div className="min-w-0 text-center">
-                  <h1 className="qx-display text-[11px] font-bold tracking-[0.3em] text-slate-200 uppercase truncate">
-                    System Console
-                  </h1>
-                  <p className="qx-mono text-[9px] text-slate-600 truncate">
-                    stream :: {serverId}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="hidden sm:block">
-                  <Clock />
-                </span>
-                <ConnPill live={connected} />
-              </div>
-            </header>
-
-
-
-            {/* ── Log body ── */}
-            <div
-              ref={bodyRef}
-              onScroll={onScroll}
-              className="flex-1 overflow-y-auto px-4 md:px-5 py-4 qx-mono text-[11px] md:text-xs leading-[1.75] qx-scroll relative z-10"
-              style={{ WebkitOverflowScrolling: "touch" }}
-              role="log"
-              aria-live="polite"
-              aria-label="Server console output"
+          {/* ═══════════ MAIN CONSOLE AREA (CONSOLE + TELEMETRY ON MOBILE SCROLL) ═══════════ */}
+          <div className={`flex-1 flex-col gap-4 order-1 xl:order-2 ${mobileTab === "console" ? "flex" : "hidden xl:flex"}`}>
+            <section
+              className={`flex flex-col h-[520px] xs:h-[580px] md:h-[68vh] xl:h-[calc(100vh-120px)] qx-panel rounded-[24px] overflow-hidden relative ${
+                ready ? "qx-enter-right" : "opacity-0"
+              }`}
+              style={{
+                animationDelay: "80ms",
+                boxShadow: "0 0 40px -15px rgba(0,0,0,0.5)",
+              }}
             >
-              {logs.length === 0 && (
-                <div className="flex items-center gap-2 text-white/25 py-2">
-                  <span className="text-emerald-400/70">❯</span>
-                  <span>Awaiting connection</span>
-                  <span className="flex gap-[3px] ml-1">
-                    {[0, 1, 2].map((i) => (
-                      <span
-                        key={i}
-                        className="w-[4px] h-[4px] rounded-full bg-emerald-400/60 inline-block"
-                        style={{
-                          animation: "qx-dot-bounce 1.4s ease-in-out infinite",
-                          animationDelay: `${i * 0.18}s`,
-                        }}
-                      />
-                    ))}
+              {/* ── Header ── */}
+              <header className="px-3 md:px-5 py-2.5 sm:py-3 flex items-center justify-between gap-2 border-b border-border-subtle relative z-10">
+                <div className="flex items-center gap-[7px] shrink-0">
+                  {["bg-[#ff5f57]", "bg-[#febc2e]", "bg-[#28c840]"].map((c, i) => (
+                    <span
+                      key={i}
+                      className={`w-2.5 h-2.5 sm:w-[11px] sm:h-[11px] rounded-full ${c} opacity-80 hover:opacity-100 transition-all cursor-default`}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 min-w-0">
+                  <XTerm size={13} className="text-emerald-400/80 shrink-0" />
+                  <div className="min-w-0 text-center">
+                    <h1 className="qx-display text-[10px] sm:text-[11px] font-bold tracking-[0.2em] sm:tracking-[0.3em] text-slate-200 uppercase truncate">
+                      System Console
+                    </h1>
+                    <p className="qx-mono text-[8px] sm:text-[9px] text-slate-500 truncate">
+                      stream :: {serverId}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="hidden sm:block">
+                    <Clock />
                   </span>
+                  <ConnPill live={connected} />
                 </div>
-              )}
+              </header>
 
-              {logs.length > 0 && visible.length === 0 && (
-                <div className="text-white/25 py-2 italic">
-                  No “{filter}” lines in buffer.
-                </div>
-              )}
-
-              {visible.map(({ l, i }) => (
-                <div
-                  key={i}
-                  className="qx-log-line flex items-start py-[3px] px-2 -mx-2 rounded-sm hover:bg-white/[0.03] transition-colors duration-150 group"
-                  style={{ animationDelay: `${Math.min(i * 10, 200)}ms` }}
-                >
-                  <span className="text-white/[0.12] group-hover:text-emerald-300/50 mr-3 select-none shrink-0 w-9 text-right text-[10px] leading-[1.75] transition-colors duration-200 tabular-nums">
-                    {i + 1}
-                  </span>
-                  {renderLine(l)}
-                </div>
-              ))}
-
-              {visible.length > 0 && (
-                <div className="flex items-center py-[3px] px-2 -mx-2">
-                  <span className="w-9 mr-3 shrink-0" />
-                  <span
-                    className="text-emerald-400/50 text-xs select-none"
-                    style={{ animation: "qx-blink 1.1s step-end infinite" }}
-                  >
-                    ▋
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* ── Jump-to-tail ── */}
-            {!atBottom && logs.length > 0 && (
-              <button
-                onClick={jumpToBottom}
-                className="qx-tail-in absolute bottom-32 right-5 z-20 flex items-center gap-1.5 qx-display text-[9px] font-bold uppercase tracking-[0.14em] px-3 py-1.5 bg-black/60 backdrop-blur-md text-emerald-300 border border-emerald-400/30 rounded-sm shadow-[0_4px_20px_-4px_rgba(52,211,153,0.4)] hover:bg-emerald-400/10 transition-colors"
+              {/* ── Log body ── */}
+              <div
+                ref={bodyRef}
+                onScroll={onScroll}
+                className="flex-1 overflow-y-auto px-2.5 sm:px-4 md:px-5 py-3 sm:py-4 qx-mono text-[11px] md:text-xs leading-[1.7] qx-scroll relative z-10"
+                style={{ WebkitOverflowScrolling: "touch" }}
+                role="log"
+                aria-live="polite"
+                aria-label="Server console output"
               >
-                <ChevronDown size={11} className="animate-bounce" />
-                Tail
-              </button>
-            )}
+                {logs.length === 0 && (
+                  <div className="flex items-center gap-2 text-foreground/25 py-2 text-xs">
+                    <span className="text-emerald-400/70">❯</span>
+                    <span>Awaiting connection</span>
+                    <span className="flex gap-[3px] ml-1">
+                      {[0, 1, 2].map((i) => (
+                        <span
+                          key={i}
+                          className="w-[4px] h-[4px] rounded-full bg-emerald-400/60 inline-block"
+                          style={{
+                            animation: "qx-dot-bounce 1.4s ease-in-out infinite",
+                            animationDelay: `${i * 0.18}s`,
+                          }}
+                        />
+                      ))}
+                    </span>
+                  </div>
+                )}
 
-            {/* ── Quick commands ── */}
-            <div className="px-3 md:px-4 pt-2.5 pb-1 flex items-center gap-1.5 overflow-x-auto qx-scroll relative z-10 border-t border-white/[0.05] bg-black/20 backdrop-blur-md">
-              <span className="qx-display text-[8px] font-bold uppercase tracking-[0.22em] text-slate-600 shrink-0 mr-1">
-                Quick
-              </span>
-              {QUICK_COMMANDS.map((q) => (
-                <button
-                  key={q.cmd}
-                  onClick={() => {
-                    setCommand(q.cmd);
-                    inputRef.current?.focus();
-                  }}
-                  className={`qx-mono text-[10px] px-2.5 py-1 rounded-sm border whitespace-nowrap transition-all duration-200 hover:-translate-y-px active:translate-y-0 ${
-                    q.danger
-                      ? "text-rose-400/80 border-rose-500/20 hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-300"
-                      : "text-slate-400 border-white/[0.08] hover:border-emerald-400/40 hover:bg-emerald-400/[0.07] hover:text-emerald-300"
-                  }`}
-                >
-                  {q.label}
-                </button>
-              ))}
-              <span className="qx-mono text-[9px] text-slate-700 ml-auto shrink-0 hidden md:block">
-                press <kbd className="text-slate-500 border border-white/10 rounded-sm px-1">/</kbd> to focus
-              </span>
-            </div>
+                {logs.length > 0 && visible.length === 0 && (
+                  <div className="text-foreground/25 py-2 italic text-xs">
+                    No “{filter}” lines in buffer.
+                  </div>
+                )}
 
-            {/* ── Command bar ── */}
-            <form
-              onSubmit={send}
-              className="px-3 md:px-4 py-3 flex gap-2.5 relative z-10 bg-black/30 backdrop-blur-md"
-            >
-              <div className="qx-input-shell flex-1 flex items-center rounded-md px-4 border border-white/[0.08] bg-white/[0.03] transition-all duration-300">
-                <span className="text-emerald-400/80 qx-mono text-xs mr-3 select-none font-semibold whitespace-nowrap">
-                  admin@node:~$
-                </span>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={command}
-                  onChange={(e) => setCommand(e.target.value)}
-                  onKeyDown={onInputKey}
-                  className="flex-1 bg-transparent py-3 text-emerald-50/90 focus:outline-none qx-mono text-xs placeholder:text-white/15 caret-emerald-400 min-w-0"
-                  placeholder="Type a command…"
-                  spellCheck={false}
-                  autoComplete="off"
-                  aria-label="Server command input"
-                />
-                {command && (
-                  <kbd className="hidden md:inline-block qx-mono text-[9px] text-white/20 border border-white/10 rounded-sm px-1.5 py-0.5 ml-2 select-none">
-                    ↵
-                  </kbd>
+                {visible.map(({ l, i }) => (
+                  <div
+                    key={i}
+                    className="qx-log-line flex items-start py-[2px] sm:py-[3px] px-1 sm:px-2 -mx-1 sm:-mx-2 rounded-sm hover:bg-muted transition-colors duration-150 group"
+                    style={{ animationDelay: `${Math.min(i * 10, 200)}ms` }}
+                  >
+                    <span className="hidden sm:inline-block text-foreground/[0.12] group-hover:text-emerald-300/50 mr-2 sm:mr-3 select-none shrink-0 w-7 sm:w-9 text-right text-[10px] leading-[1.75] transition-colors duration-200 tabular-nums">
+                      {i + 1}
+                    </span>
+                    {renderLine(l)}
+                  </div>
+                ))}
+
+                {visible.length > 0 && (
+                  <div className="flex items-center py-[2px] sm:py-[3px] px-1 sm:px-2 -mx-1 sm:-mx-2">
+                    <span className="hidden sm:inline-block w-7 sm:w-9 mr-2 sm:mr-3 shrink-0" />
+                    <span
+                      className="text-emerald-400/50 text-xs select-none"
+                      style={{ animation: "qx-blink 1.1s step-end infinite" }}
+                    >
+                      ▋
+                    </span>
+                  </div>
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={!command.trim()}
-                className="qx-run qx-display px-6 md:px-7 py-3 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-200 bg-emerald-400/[0.12] border border-emerald-400/30 disabled:opacity-30 disabled:pointer-events-none"
+              {/* ── Jump-to-tail ── */}
+              {!atBottom && logs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={jumpToBottom}
+                  className="qx-tail-in absolute bottom-28 sm:bottom-32 right-4 sm:right-5 z-20 flex items-center gap-1.5 qx-display text-[9px] font-bold uppercase tracking-[0.14em] px-2.5 py-1.5 bg-black/80 backdrop-blur-md text-emerald-300 border border-emerald-400/30 rounded-lg shadow-[0_4px_20px_-4px_rgba(52,211,153,0.4)] hover:bg-emerald-400/10 transition-colors"
+                >
+                  <ChevronDown size={11} className="animate-bounce" />
+                  Tail
+                </button>
+              )}
+
+              {/* ── Quick commands ── */}
+              <div className="px-2.5 sm:px-4 py-2 flex items-center gap-1.5 overflow-x-auto qx-scroll relative z-10 border-t border-border-subtle bg-black/20 backdrop-blur-md">
+                <span className="qx-display text-[8px] font-bold uppercase tracking-[0.22em] text-slate-500 shrink-0 mr-0.5 hidden xs:inline">
+                  Quick
+                </span>
+                {QUICK_COMMANDS.map((q) => (
+                  <button
+                    key={q.cmd}
+                    type="button"
+                    onClick={() => {
+                      setCommand(q.cmd);
+                      inputRef.current?.focus();
+                    }}
+                    className={`qx-mono text-[10px] px-2.5 py-1 rounded-lg border whitespace-nowrap transition-all duration-200 shrink-0 ${
+                      q.danger
+                        ? "text-rose-400/90 border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20"
+                        : "text-slate-300 border-border/80 bg-muted/60 hover:border-emerald-400/40 hover:bg-emerald-400/[0.08]"
+                    }`}
+                  >
+                    {q.label}
+                  </button>
+                ))}
+                <span className="qx-mono text-[9px] text-slate-600 ml-auto shrink-0 hidden md:block">
+                  press <kbd className="text-slate-500 border border-border rounded-sm px-1">/</kbd> to focus
+                </span>
+              </div>
+
+              {/* ── Command bar ── */}
+              <form
+                onSubmit={send}
+                className="p-2 sm:p-3 md:p-4 flex gap-2 relative z-10 bg-black/40 backdrop-blur-md border-t border-border-subtle"
               >
-                Execute
-              </button>
-            </form>
-          </section>
+                <div className="qx-input-shell flex-1 flex items-center rounded-xl px-2.5 sm:px-4 border border-border bg-muted/80 transition-all duration-300 min-w-0">
+                  <span className="text-emerald-400/80 qx-mono text-xs mr-1.5 sm:mr-3 select-none font-semibold whitespace-nowrap shrink-0">
+                    <span className="hidden sm:inline">admin@node:~$</span>
+                    <span className="sm:hidden">&gt;</span>
+                  </span>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={command}
+                    onChange={(e) => setCommand(e.target.value)}
+                    onKeyDown={onInputKey}
+                    className="flex-1 bg-transparent py-2.5 sm:py-3 text-emerald-50/90 focus:outline-none qx-mono text-xs placeholder:text-foreground/25 caret-emerald-400 min-w-0"
+                    placeholder="Type a command…"
+                    spellCheck={false}
+                    autoComplete="off"
+                    aria-label="Server command input"
+                  />
+                  {command && (
+                    <kbd className="hidden md:inline-block qx-mono text-[9px] text-foreground/20 border border-border rounded-sm px-1.5 py-0.5 ml-2 select-none shrink-0">
+                      ↵
+                    </kbd>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!command.trim()}
+                  className="qx-run qx-display px-3.5 sm:px-6 md:px-7 py-2.5 sm:py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-200 bg-emerald-400/[0.12] border border-emerald-400/30 rounded-xl disabled:opacity-30 disabled:pointer-events-none shrink-0"
+                >
+                  Execute
+                </button>
+              </form>
+            </section>
+
+            {/* Telemetry/Usages panel placed directly below Console box on Mobile (scrollable) */}
+            <div className="xl:hidden">
+              {renderTelemetryPanel()}
+            </div>
+          </div>
         </div>
       </div>
     </>

@@ -40,7 +40,7 @@ router.get("/users", async (req, res) => {
   if(user.role !== "admin" && user.role !== "owner") return res.status(403).json({ error: "Forbidden"});
   const users = await readJSON("users.json") || [];
   // never return passwords
-  res.json(users.map((u: any) => ({ id: u.id, username: u.username, role: u.role || 'admin', createdAt: u.createdAt })));
+  res.json(users.map((u: any) => ({ id: u.id, username: u.username, role: u.role || 'admin', isGoogleUser: !!u.googleId, createdAt: u.createdAt })));
 });
 
 router.post("/users", async (req, res) => {
@@ -92,6 +92,10 @@ router.put("/users/:id/password", async (req, res) => {
   if (users[targetIndex].id === "temp-admin") {
     return res.status(400).json({ error: "Cannot change password of default admin account." });
   }
+
+  if (users[targetIndex].googleId || !users[targetIndex].password) {
+    return res.status(400).json({ error: "Cannot change password for Google authenticated accounts." });
+  }
   
   const bcrypt = await import("bcryptjs");
   const hashedPassword = await bcrypt.default.hash(newPassword, 10);
@@ -104,16 +108,52 @@ router.put("/users/:id/password", async (req, res) => {
 router.put("/settings", async (req, res) => {
   const user = (req as any).user;
   if(user.role !== "admin" && user.role !== "owner") return res.status(403).json({ error: "Forbidden"});
-  const { panelName, panelLogo, panelBackgroundImage, panelBackgroundBlur, enablePlayit, enableTutorial, enableLoginAnimation } = req.body;
+  const { 
+    panelName, panelLogo, panelBackgroundImage, panelBackgroundBlur, 
+    enablePlayit, enableTutorial, enableLoginAnimation, enableRegistration, theme,
+    enableGoogleLogin, firebaseApiKey, firebaseAuthDomain, firebaseProjectId,
+    firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId 
+  } = req.body;
   const settings = await readJSON("settings.json") || {};
-  if (panelName !== undefined) settings.panelName = panelName || "JTG Panel";
+  if (panelName !== undefined) {
+    settings.panelName = panelName || "JTG Panel";
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const targetPaths = [
+        path.join(process.cwd(), "index.html"),
+        path.join(process.cwd(), "dist", "index.html")
+      ];
+      for (const p of targetPaths) {
+        try {
+          let html = await fs.readFile(p, "utf-8");
+          html = html.replace(/<title>.*<\/title>/i, `<title>${settings.panelName}</title>`);
+          await fs.writeFile(p, html, "utf-8");
+        } catch (e) {
+          // Ignore if file doesn't exist
+        }
+      }
+    } catch (err) {
+      console.error("Error updating html title:", err);
+    }
+  }
   if (panelLogo !== undefined) settings.panelLogo = panelLogo;
   if (panelBackgroundImage !== undefined) settings.panelBackgroundImage = panelBackgroundImage;
   if (panelBackgroundBlur !== undefined) settings.panelBackgroundBlur = panelBackgroundBlur;
   if (enablePlayit !== undefined) settings.enablePlayit = enablePlayit;
   if (enableTutorial !== undefined) settings.enableTutorial = enableTutorial;
   if (enableLoginAnimation !== undefined) settings.enableLoginAnimation = enableLoginAnimation;
+  if (enableRegistration !== undefined) settings.enableRegistration = enableRegistration;
+  if (theme !== undefined) settings.theme = theme;
+  if (enableGoogleLogin !== undefined) settings.enableGoogleLogin = enableGoogleLogin;
+  if (firebaseApiKey !== undefined) settings.firebaseApiKey = firebaseApiKey;
+  if (firebaseAuthDomain !== undefined) settings.firebaseAuthDomain = firebaseAuthDomain;
+  if (firebaseProjectId !== undefined) settings.firebaseProjectId = firebaseProjectId;
+  if (firebaseStorageBucket !== undefined) settings.firebaseStorageBucket = firebaseStorageBucket;
+  if (firebaseMessagingSenderId !== undefined) settings.firebaseMessagingSenderId = firebaseMessagingSenderId;
+  if (firebaseAppId !== undefined) settings.firebaseAppId = firebaseAppId;
   await writeJSON("settings.json", settings);
+  req.app.get("io")?.emit("settings_updated");
   res.json({ success: true });
 });
 

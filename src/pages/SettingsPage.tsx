@@ -3,21 +3,78 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useSettings } from "../context/SettingsContext";
 import { motion } from "framer-motion";
-import { Shield, User, Trash2, Layout, Upload, RefreshCw } from "lucide-react";
+import { Shield, User, Trash2, Layout, Upload, RefreshCw, Key, CheckCircle2, AlertCircle, Globe, Sparkles, ExternalLink } from "lucide-react";
 import { ImageCropper } from "../components/ImageCropper";
 import { LoadingOverlay } from "../components/LoadingOverlay";
+import { initializeApp, deleteApp, getApps } from "firebase/app";
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
-  const { panelName, panelLogo, panelBackgroundImage, panelBackgroundBlur, enablePlayit, enableTutorial, enableLoginAnimation, fetchSettings } = useSettings();
+  const { user, logout, updateUser } = useAuth();
+  const { 
+    panelName, panelLogo, panelBackgroundImage, panelBackgroundBlur, 
+    enablePlayit, enableTutorial, enableLoginAnimation, enableRegistration, theme, 
+    enableGoogleLogin, firebaseApiKey, firebaseAuthDomain, firebaseProjectId, 
+    firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId, 
+    fetchSettings 
+  } = useSettings();
+  
   const [users, setUsers] = useState<any[]>([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
+
+  // Username Change State
+  const [newCustomUsername, setNewCustomUsername] = useState(user?.username || "");
+  const [isChangingUsername, setIsChangingUsername] = useState(false);
+  const [usernameMsg, setUsernameMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  useEffect(() => {
+    if (user?.username) {
+      setNewCustomUsername(user.username);
+    }
+  }, [user?.username]);
+
+  const handleChangeUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomUsername || newCustomUsername.trim().length < 3) {
+      setUsernameMsg({ text: "Username must be at least 3 characters", type: "error" });
+      return;
+    }
+    setIsChangingUsername(true);
+    setUsernameMsg(null);
+    try {
+      const res = await axios.put("/api/auth/username", { newUsername: newCustomUsername.trim() });
+      if (updateUser) {
+        updateUser({ username: res.data.username });
+      }
+      setUsernameMsg({ text: "Username updated successfully!", type: "success" });
+      if (user.role === "admin") {
+        fetchUsers();
+      }
+    } catch (err: any) {
+      setUsernameMsg({ text: err.response?.data?.error || "Failed to update username", type: "error" });
+    } finally {
+      setIsChangingUsername(false);
+    }
+  };
   const [newPanelName, setNewPanelName] = useState(panelName);
   const [newEnablePlayit, setNewEnablePlayit] = useState(enablePlayit);
   const [newEnableTutorial, setNewEnableTutorial] = useState(enableTutorial);
   const [newEnableLoginAnimation, setNewEnableLoginAnimation] = useState(enableLoginAnimation);
+  const [newEnableRegistration, setNewEnableRegistration] = useState(enableRegistration);
+  const [newTheme, setNewTheme] = useState(theme);
+
+  // Firebase Config Local State
+  const [fbEnableGoogleLogin, setFbEnableGoogleLogin] = useState<boolean>(enableGoogleLogin || false);
+  const [fbApiKey, setFbApiKey] = useState<string>(firebaseApiKey || "");
+  const [fbAuthDomain, setFbAuthDomain] = useState<string>(firebaseAuthDomain || "");
+  const [fbProjectId, setFbProjectId] = useState<string>(firebaseProjectId || "");
+  const [fbStorageBucket, setFbStorageBucket] = useState<string>(firebaseStorageBucket || "");
+  const [fbMessagingSenderId, setFbMessagingSenderId] = useState<string>(firebaseMessagingSenderId || "");
+  const [fbAppId, setFbAppId] = useState<string>(firebaseAppId || "");
+  const [isSavingFirebase, setIsSavingFirebase] = useState(false);
+  const [fbStatusMsg, setFbStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [croppingType, setCroppingType] = useState<"logo" | "background" | null>(null);
   const [bgAspectRatio, setBgAspectRatio] = useState<number>(16/9);
@@ -52,7 +109,63 @@ export default function SettingsPage() {
     setNewEnablePlayit(enablePlayit);
     setNewEnableTutorial(enableTutorial);
     setNewEnableLoginAnimation(enableLoginAnimation);
-  }, [panelName, enablePlayit, enableTutorial, enableLoginAnimation]);
+    setNewEnableRegistration(enableRegistration);
+    setNewTheme(theme);
+    setFbEnableGoogleLogin(enableGoogleLogin || false);
+    setFbApiKey(firebaseApiKey || "");
+    setFbAuthDomain(firebaseAuthDomain || "");
+    setFbProjectId(firebaseProjectId || "");
+    setFbStorageBucket(firebaseStorageBucket || "");
+    setFbMessagingSenderId(firebaseMessagingSenderId || "");
+    setFbAppId(firebaseAppId || "");
+  }, [panelName, enablePlayit, enableTutorial, enableLoginAnimation, enableRegistration, theme, enableGoogleLogin, firebaseApiKey, firebaseAuthDomain, firebaseProjectId, firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId]);
+
+  const handleSaveFirebaseSettings = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSavingFirebase(true);
+    setFbStatusMsg(null);
+    try {
+      await axios.put("/api/system/settings", {
+        enableGoogleLogin: fbEnableGoogleLogin,
+        firebaseApiKey: fbApiKey,
+        firebaseAuthDomain: fbAuthDomain,
+        firebaseProjectId: fbProjectId,
+        firebaseStorageBucket: fbStorageBucket,
+        firebaseMessagingSenderId: fbMessagingSenderId,
+        firebaseAppId: fbAppId
+      });
+      await fetchSettings();
+      setFbStatusMsg({ text: "Firebase & Google Login settings saved successfully!", type: "success" });
+    } catch (err: any) {
+      setFbStatusMsg({ text: err.response?.data?.error || "Failed to save Firebase config", type: "error" });
+    } finally {
+      setIsSavingFirebase(false);
+    }
+  };
+
+  const handleTestFirebaseConfig = async () => {
+    setFbStatusMsg(null);
+    if (!fbApiKey || !fbProjectId) {
+      setFbStatusMsg({ text: "Please enter at least API Key and Project ID to test.", type: "error" });
+      return;
+    }
+    try {
+      const testAppName = "test-fb-app-" + Date.now();
+      const testApp = initializeApp({
+        apiKey: fbApiKey,
+        authDomain: fbAuthDomain,
+        projectId: fbProjectId,
+        storageBucket: fbStorageBucket,
+        messagingSenderId: fbMessagingSenderId,
+        appId: fbAppId
+      }, testAppName);
+      
+      await deleteApp(testApp);
+      setFbStatusMsg({ text: "Firebase Configuration verified valid!", type: "success" });
+    } catch (err: any) {
+      setFbStatusMsg({ text: "Firebase config error: " + (err.message || String(err)), type: "error" });
+    }
+  };
 
   const fetchUsers = async () => {
     if (user.role !== "admin") return;
@@ -170,268 +283,486 @@ export default function SettingsPage() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="p-5 md:p-10 max-w-7xl mx-auto"
+      className="w-full relative z-10"
     >
       <div className="mb-10">
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-2 drop-shadow-lg">Settings</h1>
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground mb-2 drop-shadow-lg">Settings</h1>
         <p className="text-indigo-400/80 font-bold uppercase tracking-widest text-sm mt-2">Configure your account and platform preferences.</p>
       </div>
 
-      <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 md:p-10 mb-8 shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5 relative overflow-hidden">
+      <div className="bg-black/40 dark:bg-black/40 backdrop-blur-2xl border border-border rounded-3xl p-6 md:p-10 mb-8 shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle relative overflow-hidden">
         {/* Subtle decorative glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[80px] rounded-full pointer-events-none" />
         
-        <h2 className="text-xl font-bold mb-6 flex items-center text-white relative z-10">
+        <h2 className="text-xl font-bold mb-6 flex items-center text-foreground relative z-10">
           <User className="mr-3 text-indigo-400 w-5 h-5" /> Account Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 mb-8">
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-[0_0_30px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
-            <p className="text-sm font-medium text-zinc-500 mb-1">Username</p>
-            <p className="text-lg font-semibold text-zinc-200">{user.username}</p>
+          <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-5 rounded-2xl shadow-[0_0_30px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Username</p>
+            <p className="text-lg font-semibold text-foreground-muted">{user.username}</p>
           </div>
-          <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-[0_0_30px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
-            <p className="text-sm font-medium text-zinc-500 mb-1">Access Role</p>
-            <p className="text-lg font-semibold text-zinc-200 capitalize flex items-center gap-2">
+          <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-5 rounded-2xl shadow-[0_0_30px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Access Role</p>
+            <p className="text-lg font-semibold text-foreground-muted capitalize flex items-center gap-2">
               {user.role}
               {user.role === 'admin' && <Shield size={14} className="text-purple-400" />}
             </p>
           </div>
         </div>
 
-        <div className="relative z-10 border-t border-white/5 pt-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Change Password</h3>
-          <form 
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (newPassword.length < 8) {
-                alert("Password must be at least 8 characters");
-                return;
-              }
-              setIsChangingPassword(true);
-              try {
-                await axios.put("/api/auth/password", { oldPassword, newPassword });
-                setOldPassword("");
-                setNewPassword("");
-                alert("Password changed successfully. You will be logged out.");
-                logout();
-              } catch (err: any) {
-                alert(err.response?.data?.error || "Error changing password");
-              } finally {
-                setIsChangingPassword(false);
-              }
-            }}
-            className="max-w-md"
-          >
-            <div className="flex flex-col gap-3">
-              <input 
-                required 
-                value={oldPassword} 
-                onChange={e => setOldPassword(e.target.value)} 
-                type="password" 
-                placeholder="Current password"
-                className="w-full bg-white/[0.03] border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-white transition-all shadow-inner outline-none" 
-              />
+        {(user.isGoogleUser || user.googleId) && (
+          <div className="relative z-10 border-t border-border-subtle pt-6 mb-8">
+            <h3 className="text-lg font-semibold text-foreground mb-3">Change Display Username</h3>
+            {usernameMsg && (
+              <div className={`p-3.5 rounded-xl mb-4 flex items-center gap-2.5 text-sm font-medium ${usernameMsg.type === "success" ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" : "bg-red-500/10 border border-red-500/30 text-red-400"}`}>
+                {usernameMsg.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <span>{usernameMsg.text}</span>
+              </div>
+            )}
+            <form onSubmit={handleChangeUsername} className="max-w-md">
               <div className="flex gap-3">
                 <input 
                   required 
-                  minLength={8}
-                  value={newPassword} 
-                  onChange={e => setNewPassword(e.target.value)} 
-                  type="password" 
-                  placeholder="New password (min 8 chars)"
-                  className="flex-1 bg-white/[0.03] border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-white transition-all shadow-inner outline-none" 
+                  minLength={3}
+                  value={newCustomUsername} 
+                  onChange={e => setNewCustomUsername(e.target.value)} 
+                  type="text" 
+                  placeholder="Enter new username"
+                  className="flex-1 bg-muted border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-foreground transition-all shadow-inner outline-none" 
                 />
                 <button 
                   type="submit" 
-                  disabled={isChangingPassword || user.username === "admin"}
-                  className="bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white font-semibold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] active:scale-[0.98] whitespace-nowrap"
+                  disabled={isChangingUsername || user.username === "admin" || newCustomUsername.trim() === user.username}
+                  className="bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-foreground font-semibold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] active:scale-[0.98] whitespace-nowrap"
                 >
-                  {isChangingPassword ? "Updating..." : "Update"}
+                  {isChangingUsername ? "Saving..." : "Save Username"}
                 </button>
               </div>
+            </form>
+            <p className="text-xs text-amber-400/90 mt-2">
+              Google Authenticated Users can update their display username at any time without impacting their Google login credentials.
+            </p>
+          </div>
+        )}
+
+        <div className="relative z-10 border-t border-border-subtle pt-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Change Password</h3>
+          {user.isGoogleUser || user.googleId ? (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm font-medium flex items-center gap-3 max-w-md">
+              <Shield size={20} className="text-amber-400 flex-shrink-0" />
+              <span>Password change is disabled because you signed in with your Google account.</span>
             </div>
-            {user.username === "admin" && (
-              <p className="text-xs text-red-400 mt-2">Default admin password cannot be changed.</p>
-            )}
-          </form>
+          ) : (
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (newPassword.length < 8) {
+                  alert("Password must be at least 8 characters");
+                  return;
+                }
+                setIsChangingPassword(true);
+                try {
+                  await axios.put("/api/auth/password", { oldPassword, newPassword });
+                  setOldPassword("");
+                  setNewPassword("");
+                  alert("Password changed successfully. You will be logged out.");
+                  logout();
+                } catch (err: any) {
+                  alert(err.response?.data?.error || "Error changing password");
+                } finally {
+                  setIsChangingPassword(false);
+                }
+              }}
+              className="max-w-md"
+            >
+              <div className="flex flex-col gap-3">
+                <input 
+                  required 
+                  value={oldPassword} 
+                  onChange={e => setOldPassword(e.target.value)} 
+                  type="password" 
+                  placeholder="Current password"
+                  className="w-full bg-muted border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-foreground transition-all shadow-inner outline-none" 
+                />
+                <div className="flex gap-3">
+                  <input 
+                    required 
+                    minLength={8}
+                    value={newPassword} 
+                    onChange={e => setNewPassword(e.target.value)} 
+                    type="password" 
+                    placeholder="New password (min 8 chars)"
+                    className="flex-1 bg-muted border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-foreground transition-all shadow-inner outline-none" 
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={isChangingPassword || user.username === "admin"}
+                    className="bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-foreground font-semibold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] active:scale-[0.98] whitespace-nowrap"
+                  >
+                    {isChangingPassword ? "Updating..." : "Update"}
+                  </button>
+                </div>
+              </div>
+              {user.username === "admin" && (
+                <p className="text-xs text-red-400 mt-2">Default admin password cannot be changed.</p>
+              )}
+            </form>
+          )}
         </div>
       </div>
 
       {user.role === "admin" && (
-        <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 md:p-10 mb-8 shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5 relative overflow-hidden">
-          <h2 className="text-xl font-bold mb-6 flex items-center text-white relative z-10">
-            <Layout className="mr-3 text-emerald-400 w-5 h-5" /> Platform Preferences
-          </h2>
-          <div className="flex flex-col md:flex-row flex-wrap gap-8 relative z-10">
-            <form 
-              onSubmit={async (e) => {
-                e.preventDefault();
-                setIsSavingSettings(true);
-                try {
-                  await axios.put("/api/system/settings", { panelName: newPanelName, enablePlayit: newEnablePlayit });
-                  fetchSettings();
-                  alert("Settings updated successfully");
-                } catch (err: any) {
-                  alert(err.response?.data?.error || "Error updating settings");
-                } finally {
-                  setIsSavingSettings(false);
-                }
-              }}
-              className="flex-1 max-w-md"
-            >
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5">Panel Name</label>
-              <div className="flex gap-3 mb-6">
-                <input 
-                  required 
-                  value={newPanelName} 
-                  onChange={e => setNewPanelName(e.target.value)} 
-                  type="text" 
-                  className="flex-1 bg-white/[0.03] border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-white transition-all shadow-inner outline-none" 
-                />
-                <button disabled={isSavingSettings} type="submit" className="bg-white text-zinc-900 hover:bg-zinc-200 font-semibold px-6 py-2.5 rounded-xl transition-all shadow-sm active:scale-[0.98] whitespace-nowrap disabled:opacity-50">
-                  {isSavingSettings ? "Saving..." : "Save"}
-                </button>
-              </div>
-            </form>
-            
-            <div className="flex-1 max-w-sm">
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5 flex items-center gap-2">
-                Features
-              </label>
-              <div className="flex flex-col gap-4 mt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={newEnablePlayit} 
-                      onChange={async (e) => {
-                        const val = e.target.checked;
-                        setNewEnablePlayit(val);
-                        try {
-                          await axios.put("/api/system/settings", { enablePlayit: val });
-                          fetchSettings();
-                        } catch (err) {
-                          console.error(err);
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
-                  </div>
-                  <span className="text-sm font-medium text-zinc-300">Enable Playit Tunnel</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={newEnableTutorial} 
-                      onChange={async (e) => {
-                        const val = e.target.checked;
-                        setNewEnableTutorial(val);
-                        try {
-                          await axios.put("/api/system/settings", { enableTutorial: val });
-                          fetchSettings();
-                        } catch (err) {
-                          console.error(err);
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
-                  </div>
-                  <span className="text-sm font-medium text-zinc-300">Enable Onboarding Tutorial for New Users</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div className="relative flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={newEnableLoginAnimation} 
-                      onChange={async (e) => {
-                        const val = e.target.checked;
-                        setNewEnableLoginAnimation(val);
-                        try {
-                          await axios.put("/api/system/settings", { enableLoginAnimation: val });
-                          fetchSettings();
-                        } catch (err) {
-                          console.error(err);
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
-                  </div>
-                  <span className="text-sm font-medium text-zinc-300">Enable Login Screen Cinematic Animation</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex-1 max-w-sm">
-              <label className="block text-sm font-medium text-zinc-400 mb-1.5">Panel Logo</label>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 relative group">
-                  {panelLogo ? (
-                    <img src={panelLogo} alt="Panel Logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <Layout className="w-8 h-8 text-zinc-600" />
-                  )}
-                  {panelLogo && (
-                    <button 
-                      onClick={async () => {
-                        try {
-                          await axios.put("/api/system/settings", { panelLogo: "" });
-                          fetchSettings();
-                        } catch(e) {}
-                      }}
-                      className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 size={18} className="text-white" />
-                    </button>
-                  )}
-                </div>
-                
-                <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 relative z-10">
+          
+          {/* Branding & Identity */}
+          <div className="bg-card border border-border-subtle rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden">
+            <h2 className="text-xl font-bold mb-6 flex items-center text-foreground">
+              <Layout className="mr-3 text-indigo-400 w-5 h-5" /> Branding & Identity
+            </h2>
+            <div className="flex flex-col gap-8">
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setIsSavingSettings(true);
+                  try {
+                    await axios.put("/api/system/settings", { panelName: newPanelName });
+                    fetchSettings();
+                  } catch (err: any) {
+                    alert(err.response?.data?.error || "Error updating settings");
+                  } finally {
+                    setIsSavingSettings(false);
+                  }
+                }}
+              >
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Panel Name</label>
+                <div className="flex gap-3">
                   <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    ref={fileInputRef}
-                    onChange={(e) => handleFileChange(e, "logo")}
+                    required 
+                    value={newPanelName} 
+                    onChange={e => setNewPanelName(e.target.value)} 
+                    type="text" 
+                    placeholder="Enter panel name"
                   />
-                  <button 
-                    disabled={isUpdatingLogo}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center justify-center w-full gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isUpdatingLogo ? <div className="w-4 h-4 rounded-full border-2 border-indigo-400/50 border-t-indigo-400 animate-spin"></div> : <Upload size={18} />}
-                    {isUpdatingLogo ? "Updating..." : (panelLogo ? "Change Logo" : "Upload Logo")}
+                  <button disabled={isSavingSettings} type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-[0.98] whitespace-nowrap disabled:opacity-50">
+                    {isSavingSettings ? "Saving..." : "Save"}
                   </button>
-                  <p className="text-xs text-zinc-500 mt-2">Recommended: Square image, PNG or JPG.</p>
+                </div>
+              </form>
+
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-3">Panel Logo</label>
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                  <div className="w-20 h-20 rounded-2xl bg-muted border border-border-subtle flex items-center justify-center overflow-hidden flex-shrink-0 relative group shadow-inner">
+                    {panelLogo ? (
+                      <img src={panelLogo} alt="Panel Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <Layout className="w-8 h-8 text-muted-foreground/50" />
+                    )}
+                    {panelLogo && (
+                      <button 
+                        onClick={async () => {
+                          try {
+                            await axios.put("/api/system/settings", { panelLogo: "" });
+                            fetchSettings();
+                          } catch(e) {}
+                        }}
+                        className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                        title="Remove logo"
+                      >
+                        <Trash2 size={20} className="text-white" />
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 w-full text-center sm:text-left">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={fileInputRef}
+                      onChange={(e) => handleFileChange(e, "logo")}
+                    />
+                    <button 
+                      disabled={isUpdatingLogo}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center justify-center gap-2 bg-muted hover:bg-muted-hover text-foreground border border-border font-medium px-5 py-2.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 w-full sm:w-auto mb-2"
+                    >
+                      {isUpdatingLogo ? <div className="w-4 h-4 rounded-full border-2 border-muted-foreground border-t-foreground animate-spin"></div> : <Upload size={18} />}
+                      {isUpdatingLogo ? "Uploading..." : (panelLogo ? "Replace Logo" : "Upload Logo")}
+                    </button>
+                    <p className="text-xs text-muted-foreground">We recommend a square image, PNG or JPG format, at least 256x256px.</p>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            
+          {/* Platform Features */}
+          <div className="bg-card border border-border-subtle rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden">
+            <h2 className="text-xl font-bold mb-6 flex items-center text-foreground">
+              <RefreshCw className="mr-3 text-emerald-400 w-5 h-5" /> Platform Features
+            </h2>
+            <div className="flex flex-col gap-6">
+              
+              <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-muted/50 border border-border-subtle">
+                <div>
+                  <h3 className="font-semibold text-foreground text-sm">Playit Tunnel Integration</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Allow users to expose their local servers to the internet using playit.gg tunnels.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+                  <input 
+                    type="checkbox" 
+                    checked={newEnablePlayit} 
+                    onChange={async (e) => {
+                      const val = e.target.checked;
+                      setNewEnablePlayit(val);
+                      try {
+                        await axios.put("/api/system/settings", { enablePlayit: val });
+                        fetchSettings();
+                      } catch (err) { console.error(err); }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
 
+              <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-muted/50 border border-border-subtle">
+                <div>
+                  <h3 className="font-semibold text-foreground text-sm">Onboarding Tutorial</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Show a guided tour to new users when they log in for the first time.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+                  <input 
+                    type="checkbox" 
+                    checked={newEnableTutorial} 
+                    onChange={async (e) => {
+                      const val = e.target.checked;
+                      setNewEnableTutorial(val);
+                      try {
+                        await axios.put("/api/system/settings", { enableTutorial: val });
+                        fetchSettings();
+                      } catch (err) { console.error(err); }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-muted/50 border border-border-subtle">
+                <div>
+                  <h3 className="font-semibold text-foreground text-sm">Cinematic Login Intro</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Enable the animated sequence on the login screen.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+                  <input 
+                    type="checkbox" 
+                    checked={newEnableLoginAnimation} 
+                    onChange={async (e) => {
+                      const val = e.target.checked;
+                      setNewEnableLoginAnimation(val);
+                      try {
+                        await axios.put("/api/system/settings", { enableLoginAnimation: val });
+                        fetchSettings();
+                      } catch (err) { console.error(err); }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-muted/50 border border-border-subtle">
+                <div>
+                  <h3 className="font-semibold text-foreground text-sm">User Registration</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Allow new users to register an account on the panel.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+                  <input 
+                    type="checkbox" 
+                    checked={newEnableRegistration} 
+                    onChange={async (e) => {
+                      const val = e.target.checked;
+                      setNewEnableRegistration(val);
+                      try {
+                        await axios.put("/api/system/settings", { enableRegistration: val });
+                        fetchSettings();
+                      } catch (err) { console.error(err); }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+
+            </div>
           </div>
         </div>
       )}
 
       {user.role === "admin" && (
-        <div className="bg-black/20 backdrop-blur-xl border border-white/5 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
-          <h2 className="text-xl font-bold mb-8 flex items-center text-white relative z-10">
+        <div className="bg-card border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10 border-b border-border-subtle pb-6">
+            <div>
+              <h2 className="text-xl font-bold flex items-center text-foreground">
+                <Key className="mr-3 text-amber-400 w-6 h-6" /> Google & Firebase Authentication
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Configure Firebase API Keys to enable 1-click Google Sign-In for admins and users.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 bg-muted p-2 rounded-xl border border-border">
+              <span className="text-xs font-semibold text-muted-foreground">Enable Google Login:</span>
+              <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input 
+                  type="checkbox" 
+                  checked={fbEnableGoogleLogin} 
+                  onChange={(e) => setFbEnableGoogleLogin(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+          </div>
+
+          {/* Quick Guide Banner */}
+          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-6 text-xs text-amber-200/90 leading-relaxed">
+            <div className="font-bold text-amber-300 text-sm mb-1 flex items-center gap-2">
+              <Sparkles size={16} /> How to Setup Google Login in 1 Minute (No Code Needed!):
+            </div>
+            <ol className="list-decimal list-inside space-y-1 mt-2 text-muted-foreground">
+              <li>Open <a href="https://console.firebase.google.com" target="_blank" rel="noreferrer" className="text-amber-400 underline font-medium hover:text-amber-300 inline-flex items-center gap-1">Firebase Console <ExternalLink size={12} /></a> and create a free project.</li>
+              <li>Go to <strong>Authentication &rarr; Sign-in method</strong> and enable <strong>Google</strong>.</li>
+              <li>Under <strong>Settings &rarr; Authorized Domains</strong>, add your panel's domain or IP address.</li>
+              <li>Go to <strong>Project Settings &rarr; General &rarr; Your apps</strong>, create a Web App and copy the Firebase config credentials below!</li>
+            </ol>
+          </div>
+
+          {fbStatusMsg && (
+            <div className={`p-4 rounded-xl mb-6 flex items-center gap-3 text-sm font-medium ${fbStatusMsg.type === "success" ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" : "bg-red-500/10 border border-red-500/30 text-red-400"}`}>
+              {fbStatusMsg.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              <span>{fbStatusMsg.text}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveFirebaseSettings} className="space-y-4 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  Firebase API Key <span className="text-red-400">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="AIzaSy..." 
+                  value={fbApiKey} 
+                  onChange={(e) => setFbApiKey(e.target.value)} 
+                  className="w-full bg-muted border border-border focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-sm text-foreground font-mono transition-all shadow-inner outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  Auth Domain <span className="text-red-400">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="your-project.firebaseapp.com" 
+                  value={fbAuthDomain} 
+                  onChange={(e) => setFbAuthDomain(e.target.value)} 
+                  className="w-full bg-muted border border-border focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-sm text-foreground font-mono transition-all shadow-inner outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  Project ID <span className="text-red-400">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="your-project-id" 
+                  value={fbProjectId} 
+                  onChange={(e) => setFbProjectId(e.target.value)} 
+                  className="w-full bg-muted border border-border focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-sm text-foreground font-mono transition-all shadow-inner outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  Storage Bucket (Optional)
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="your-project.appspot.com" 
+                  value={fbStorageBucket} 
+                  onChange={(e) => setFbStorageBucket(e.target.value)} 
+                  className="w-full bg-muted border border-border focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-sm text-foreground font-mono transition-all shadow-inner outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  Messaging Sender ID (Optional)
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="1234567890" 
+                  value={fbMessagingSenderId} 
+                  onChange={(e) => setFbMessagingSenderId(e.target.value)} 
+                  className="w-full bg-muted border border-border focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-sm text-foreground font-mono transition-all shadow-inner outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                  App ID (Optional)
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="1:1234567890:web:abcdef" 
+                  value={fbAppId} 
+                  onChange={(e) => setFbAppId(e.target.value)} 
+                  className="w-full bg-muted border border-border focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 rounded-xl px-4 py-2.5 text-sm text-foreground font-mono transition-all shadow-inner outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-4">
+              <button 
+                type="submit" 
+                disabled={isSavingFirebase}
+                className="bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
+              >
+                {isSavingFirebase ? "Saving Config..." : "Save Firebase Credentials"}
+              </button>
+
+              <button 
+                type="button" 
+                onClick={handleTestFirebaseConfig}
+                className="bg-muted hover:bg-muted/80 border border-border text-foreground font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm active:scale-[0.98]"
+              >
+                Test Connection
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {user.role === "admin" && (
+        <div className="bg-muted backdrop-blur-xl border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
+          <h2 className="text-xl font-bold mb-8 flex items-center text-foreground relative z-10">
             <Layout className="mr-3 text-indigo-400 w-5 h-5" /> Background Configuration
           </h2>
           <div className="max-w-2xl relative z-10">
             <div className="flex flex-col sm:flex-row gap-8">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-zinc-400 mb-4">Background Image</label>
-                <div className="w-full h-48 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center overflow-hidden relative group mb-4">
+                <label className="block text-sm font-medium text-muted-foreground mb-4">Background Image</label>
+                <div className="w-full h-48 rounded-xl bg-muted border border-border flex items-center justify-center overflow-hidden relative group mb-4">
                   {panelBackgroundImage ? (
                     <img src={panelBackgroundImage} alt="Panel Background" className="w-full h-full object-cover" />
                   ) : (
-                    <Layout className="w-12 h-12 text-zinc-600" />
+                    <Layout className="w-12 h-12 text-muted-foreground" />
                   )}
                   {panelBackgroundImage && (
                     <button 
@@ -443,7 +774,7 @@ export default function SettingsPage() {
                       }}
                       className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Trash2 size={24} className="text-white" />
+                      <Trash2 size={24} className="text-foreground" />
                     </button>
                   )}
                 </div>
@@ -472,18 +803,18 @@ export default function SettingsPage() {
                         setIsProcessing(false);
                       }
                     }}
-                    className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/10 font-semibold px-4 py-3 rounded-xl transition-all shadow-sm active:scale-[0.98]"
+                    className="w-full flex items-center justify-center gap-2 bg-muted hover:bg-muted-hover text-foreground-muted border border-border font-semibold px-4 py-3 rounded-xl transition-all shadow-sm active:scale-[0.98]"
                   >
                     <Layout size={18} /> Default Theme
                   </button>
                 </div>
-                <p className="text-xs text-zinc-500 mt-3 text-center">Will be automatically scaled and cropped to fit 16:9 on desktop and 9:16 on mobile.</p>
+                <p className="text-xs text-muted-foreground mt-3 text-center">Will be automatically scaled and cropped to fit 16:9 on desktop and 9:16 on mobile.</p>
 
               </div>
 
               <div className="flex-1 flex flex-col justify-center">
                 <label className="block text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2 drop-shadow-sm">Background Blur: {tempBgBlur}px</label>
-                <p className="text-xs text-zinc-500 mb-6">Adjust the blur to make the text and UI elements more readable.</p>
+                <p className="text-xs text-muted-foreground mb-6">Adjust the blur to make the text and UI elements more readable.</p>
                 <input 
                   type="range" 
                   min="0" 
@@ -527,26 +858,26 @@ export default function SettingsPage() {
       )}
 
       {user.role === "admin" && (
-        <div className="bg-[#0a0a0c] border border-white/5 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden">
-          <h2 className="text-xl font-bold mb-8 flex items-center text-white relative z-10">
+        <div className="bg-card border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden">
+          <h2 className="text-xl font-bold mb-8 flex items-center text-foreground relative z-10">
             <Shield className="mr-3 text-purple-400 w-5 h-5" /> Administrator Controls
           </h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-            <div className="lg:col-span-4 lg:border-r border-white/5 lg:pr-8">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-zinc-500 mb-6">Provision Identity</h3>
+            <div className="lg:col-span-4 lg:border-r border-border-subtle lg:pr-8">
+              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-6">Provision Identity</h3>
               <form onSubmit={createUser} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1.5">Username</label>
-                  <input required value={username} onChange={e=>setUsername(e.target.value)} type="text" className="w-full bg-white/[0.03] border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-white transition-all shadow-inner outline-none" />
+                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">Username</label>
+                  <input required value={username} onChange={e=>setUsername(e.target.value)} type="text" className="w-full bg-muted border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-foreground transition-all shadow-inner outline-none" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1.5">Password</label>
-                  <input required minLength={4} value={password} onChange={e=>setPassword(e.target.value)} type="password" className="w-full bg-white/[0.03] border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-white transition-all shadow-inner outline-none" />
+                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">Password</label>
+                  <input required minLength={4} value={password} onChange={e=>setPassword(e.target.value)} type="password" className="w-full bg-muted border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-foreground transition-all shadow-inner outline-none" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1.5">Role Privileges</label>
-                  <select value={role} onChange={e=>setRole(e.target.value)} className="w-full bg-white/[0.03] border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-white transition-all shadow-inner outline-none">
+                  <label className="block text-sm font-medium text-muted-foreground mb-1.5">Role Privileges</label>
+                  <select value={role} onChange={e=>setRole(e.target.value)} className="w-full bg-muted border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-foreground transition-all shadow-inner outline-none">
                     <option value="user" className="bg-zinc-900">Standard User</option>
                     <option value="admin" className="bg-zinc-900">Administrator</option>
                   </select>
@@ -558,24 +889,25 @@ export default function SettingsPage() {
             </div>
 
             <div className="lg:col-span-8">
-               <h3 className="font-semibold text-sm uppercase tracking-wider text-zinc-500 mb-6 flex items-center justify-between">
+               <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-6 flex items-center justify-between">
                 <span>Active Identities ({users.length})</span>
               </h3>
                <div className="space-y-3">
                  {users.map(u => (
-                   <div key={u.id} className="flex flex-col p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.04] transition-colors">
+                   <div key={u.id} className="flex flex-col p-4 bg-muted-subtle border border-border-subtle rounded-xl hover:bg-muted transition-colors">
                       <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-white flex items-center">
+                         <div>
+                          <p className="font-medium text-foreground flex items-center gap-2">
                             {u.username}
-                            {u.id === user.id && <span className="ml-3 text-[10px] uppercase font-bold tracking-wider bg-indigo-500/20 text-indigo-400 px-2.5 py-0.5 rounded border border-indigo-500/20">You</span>}
+                            {u.id === user.id && <span className="text-[10px] uppercase font-bold tracking-wider bg-indigo-500/20 text-indigo-400 px-2.5 py-0.5 rounded border border-indigo-500/20">You</span>}
+                            {u.isGoogleUser && <span className="text-[10px] uppercase font-bold tracking-wider bg-amber-500/20 text-amber-400 px-2.5 py-0.5 rounded border border-amber-500/20">Google Auth</span>}
                           </p>
-                          <p className={`text-xs mt-1 capitalize font-medium ${u.role === 'admin' ? 'text-purple-400' : 'text-zinc-500'}`}> 
+                          <p className={`text-xs mt-1 capitalize font-medium ${u.role === 'admin' ? 'text-purple-400' : 'text-muted-foreground'}`}> 
                             Role: {u.role}
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          {u.id !== user.id && (
+                          {u.id !== user.id && !u.isGoogleUser && (
                             <button onClick={() => {
                               if (editingUserId === u.id) {
                                 setEditingUserId(null);
@@ -587,25 +919,30 @@ export default function SettingsPage() {
                               {editingUserId === u.id ? "Cancel" : "Change Password"}
                             </button>
                           )}
+                          {u.id !== user.id && u.isGoogleUser && (
+                            <span className="px-2.5 py-1 text-[11px] font-medium text-amber-400/80 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                              Google Account
+                            </span>
+                          )}
                           {u.id !== user.id && (
-                            <button onClick={() => deleteUser(u.id)} className="p-1.5 text-zinc-500 bg-white/[0.03] border border-transparent hover:border-red-500/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Revoke access">
+                            <button onClick={() => deleteUser(u.id)} className="p-1.5 text-muted-foreground bg-muted border border-transparent hover:border-red-500/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Revoke access">
                               <Trash2 size={16} />
                             </button>
                           )}
                         </div>
                       </div>
                       {editingUserId === u.id && (
-                        <div className="mt-4 pt-4 border-t border-white/5 flex gap-3">
+                        <div className="mt-4 pt-4 border-t border-border-subtle flex gap-3">
                           <input 
                             type="password" 
                             placeholder="New Password (min 8 chars)" 
                             value={adminUserNewPassword}
                             onChange={(e) => setAdminUserNewPassword(e.target.value)}
-                            className="flex-1 bg-white/[0.03] border border-white/10 focus:border-indigo-500 rounded-lg px-3 py-2 text-sm text-white outline-none"
+                            className="flex-1 bg-muted border border-border focus:border-indigo-500 rounded-lg px-3 py-2 text-sm text-foreground outline-none"
                           />
                           <button 
                             onClick={() => changeUserPassword(u.id)}
-                            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground text-sm font-medium rounded-lg transition-colors shadow-sm"
                           >
                             Save
                           </button>
@@ -621,11 +958,11 @@ export default function SettingsPage() {
       )}
 
       {user.role === "admin" && (
-        <div className="bg-[#0a0a0c] border border-white/5 rounded-2xl p-6 md:p-8 shadow-xl mt-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center text-white">
+        <div className="bg-card border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl mt-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center text-foreground">
             <RefreshCw className="mr-3 text-emerald-400 w-5 h-5" /> System Update
           </h2>
-          <p className="text-zinc-400 text-sm mb-6 max-w-2xl">
+          <p className="text-muted-foreground text-sm mb-6 max-w-2xl">
             Trigger an automatic update of the JTG Panel. This will run git pull and rebuild the system. The panel will be unavailable for a few seconds during this process.
           </p>
           <button 

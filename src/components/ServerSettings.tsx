@@ -133,7 +133,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
     <>
       {showDowngradeRestartPopup && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-black/60 backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-3xl max-w-md w-full shadow-[0_0_50px_-10px_rgba(0,0,0,0.8)] ring-1 ring-white/5 relative overflow-hidden">
+          <div className="bg-black/60 backdrop-blur-2xl border border-border p-6 md:p-8 rounded-3xl max-w-md w-full shadow-[0_0_50px_-10px_rgba(0,0,0,0.8)] ring-1 ring-border-subtle relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-600 to-amber-400"></div>
             <div className="flex items-start mb-4">
@@ -141,8 +141,8 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white mb-1">Restart Required</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">
+                <h3 className="text-lg font-bold text-foreground mb-1">Restart Required</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   Restart the server to ensure files are processed correctly.
                 </p>
               </div>
@@ -161,20 +161,20 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
         </div>
       )}
 
-    <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar text-white bg-transparent">
+    <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar text-foreground bg-transparent">
       <div className="max-w-3xl space-y-8">
         <div>
           <h2 className="text-xl font-bold mb-2">Settings</h2>
-          <p className="text-zinc-400 text-sm mb-6">Manage advanced configuration and dangerous actions for this unit.</p>
+          <p className="text-muted-foreground text-sm mb-6">Manage advanced configuration and dangerous actions for this unit.</p>
         </div>
 
         {canManage ? (
           <>
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5 relative z-30 group hover:bg-black/60 transition-colors mb-8">
+            <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle relative z-30 group hover:bg-black/60 transition-colors mb-8">
               <h3 className="text-amber-400 font-bold mb-2 flex items-center">
                 <AlertTriangle className="w-5 h-5 mr-2" /> Change Server Version
               </h3>
-              <p className="text-zinc-400 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Update the server version (server.jar). 
                 <span className="text-amber-400/80 block mt-1">
                   WARNING: The server MUST be stopped before changing the version. Do this at your own risk. Your world backup might be affected. If you have not taken a backup, please take a backup first. Changing the version will delete the old server.jar and download the new one.
@@ -183,12 +183,12 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
               
               <div className="flex flex-col sm:flex-row gap-4 mb-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-zinc-400 mb-2">Software Type</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Software Type</label>
                   <select
                     value={selectedType}
                     onChange={e => setSelectedType(e.target.value)}
                     disabled={isChangingVersion}
-                    className="w-full bg-[#0a0a0c] border border-white/10 focus:border-indigo-500 rounded-xl px-4 py-3 text-white transition-all outline-none"
+                    className="w-full bg-card border border-border focus:border-indigo-500 rounded-xl px-4 py-3 text-foreground transition-all outline-none"
                   >
                     <option value="PAPER">Paper (Performance Minecraft)</option>
                     <option value="VELOCITY">Velocity (Proxy)</option>
@@ -201,7 +201,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-zinc-400 mb-2">Software Version</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Software Version</label>
                   <SearchableDropdown
                     value={selectedVersion}
                     onChange={setSelectedVersion}
@@ -209,7 +209,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
                     placeholder="Select Version"
                     searchPlaceholder="Search versions..."
                     disabled={isChangingVersion}
-                    className="font-mono bg-[#0a0a0c]"
+                    className="font-mono bg-card"
                   />
                 </div>
                 <div className="flex items-end">
@@ -224,7 +224,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
               </div>
 
               {isChangingVersion && (
-                <div className="mt-6 p-4 border border-zinc-800 bg-black/20 rounded-xl">
+                <div className="mt-6 p-4 border border-zinc-800 bg-muted rounded-xl">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-medium text-amber-400">Downloading {selectedVersion} and recreating server...</span>
                         <span className="text-sm font-mono text-amber-400/80">{versionProgress}% downloading</span>
@@ -239,11 +239,11 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
               )}
             </div>
 
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5 relative z-20 group hover:bg-black/60 transition-colors mb-8">
+            <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle relative z-20 group hover:bg-black/60 transition-colors mb-8">
               <h3 className="text-indigo-400 font-bold mb-2 flex items-center">
                 <Globe className="w-5 h-5 mr-2" /> Server IP Alias
               </h3>
-              <p className="text-zinc-400 text-sm mb-4">
+              <p className="text-muted-foreground text-sm mb-4">
                 Set a custom domain or IP to display on the console page.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -253,7 +253,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
                     value={ipAlias} 
                     onChange={e => setIpAlias(e.target.value)} 
                     placeholder="e.g. play.example.com"
-                    className="w-full bg-[#0a0a0c] border border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2 text-white transition-all shadow-inner outline-none font-mono"
+                    className="w-full bg-card border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2 text-foreground transition-all shadow-inner outline-none font-mono"
                   />
                 </div>
                 <button 
@@ -269,11 +269,11 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
             {user?.role === "admin" ? (
               <>
 
-                <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5 relative z-10 group hover:bg-black/60 transition-colors">
+                <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle relative z-10 group hover:bg-black/60 transition-colors">
                   <h3 className="text-indigo-400 font-bold mb-2 flex items-center">
                     <User className="w-5 h-5 mr-2" /> Server Ownership
                   </h3>
-                  <p className="text-zinc-400 text-sm mb-4">
+                  <p className="text-muted-foreground text-sm mb-4">
                     Transfer the ownership of this server to another user.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -284,7 +284,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
                         options={users.map(u => ({ value: u.id, label: `${u.username} (${u.role})` }))}
                         placeholder="Select an owner..."
                         searchPlaceholder="Search users..."
-                        className="bg-[#0a0a0c]"
+                        className="bg-card"
                       />
                     </div>
                     <button 
@@ -300,7 +300,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
             ) : null}
           </>
         ) : (
-           <div className="text-zinc-500 text-sm p-4 bg-white/5 rounded-xl border border-white/5">
+           <div className="text-muted-foreground text-sm p-4 bg-muted rounded-xl border border-border-subtle">
              You do not have permission to manage this server's settings.
            </div>
         )}

@@ -54,8 +54,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     delete axios.defaults.headers.common["Authorization"];
   };
 
+  const refreshUser = async () => {
+    try {
+      const res = await axios.get("/api/auth/me");
+      setUser(res.data.user);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const updateUser = (updatedFields: any) => {
+    setUser((prev: any) => (prev ? { ...prev, ...updatedFields } : prev));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading, refreshUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

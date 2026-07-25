@@ -251,13 +251,13 @@ export default function FileManager({ serverId }: { serverId: string }) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative min-h-0 h-full w-full bg-transparent p-4 md:p-6">
-      <div className="p-4 md:p-6 mb-6 flex flex-col sm:flex-row items-center justify-between bg-black/40 backdrop-blur-xl rounded-3xl border border-white/10 shrink-0 gap-4 shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
+      <div className="p-4 md:p-6 mb-6 flex flex-col sm:flex-row items-center justify-between bg-black/40 dark:bg-black/40 backdrop-blur-xl rounded-3xl border border-border shrink-0 gap-4 shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle">
         <div className="flex items-center justify-between w-full sm:w-auto">
           <div className="flex items-center space-x-3">
             <button onClick={goUp} disabled={path === "/" && !editingFile} className="p-2 bg-gray-800/60 hover:bg-gray-700/60 rounded-lg text-gray-300 disabled:opacity-50 transition-colors">
               <ArrowLeft size={18} />
             </button>
-            <div className="font-mono text-sm font-bold text-white bg-black/60 px-4 py-2 rounded-xl border border-white/10 backdrop-blur-md shadow-inner max-w-[150px] sm:max-w-xs truncate tracking-tight">
+            <div className="font-mono text-sm font-bold text-foreground bg-black/60 px-4 py-2 rounded-xl border border-border backdrop-blur-md shadow-inner max-w-[150px] sm:max-w-xs truncate tracking-tight">
               {editingFile ? `Editing: ${editingFile}` : path}
             </div>
           </div>
@@ -266,18 +266,18 @@ export default function FileManager({ serverId }: { serverId: string }) {
             {!editingFile ? (
               <div className="relative flex space-x-1">
                 {uploadProgress !== null ? (
-                  <div className="flex items-center justify-center w-8 h-8 bg-indigo-600/50 rounded-lg border border-indigo-500/50 text-white">
+                  <div className="flex items-center justify-center w-8 h-8 bg-indigo-600/50 rounded-lg border border-indigo-500/50 text-foreground">
                     <div className="w-4 h-4 rounded-full border-2 border-indigo-200 border-t-transparent animate-spin"></div>
                   </div>
                 ) : (
                   <>
-                    <button onClick={handleCreateFile} className="flex items-center justify-center w-8 h-8 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-lg text-white transition-colors cursor-pointer border border-white/5">
+                    <button onClick={handleCreateFile} className="flex items-center justify-center w-8 h-8 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-lg text-foreground transition-colors cursor-pointer border border-border-subtle">
                       <FilePlus size={16} />
                     </button>
-                    <button onClick={handleCreateFolder} className="flex items-center justify-center w-8 h-8 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-lg text-white transition-colors cursor-pointer border border-white/5">
+                    <button onClick={handleCreateFolder} className="flex items-center justify-center w-8 h-8 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-lg text-foreground transition-colors cursor-pointer border border-border-subtle">
                       <FolderPlus size={16} />
                     </button>
-                    <label className="flex items-center justify-center w-8 h-8 bg-indigo-600/90 hover:bg-indigo-500/90 rounded-lg text-white transition-colors cursor-pointer">
+                    <label className="flex items-center justify-center w-8 h-8 bg-indigo-600/90 hover:bg-indigo-500/90 rounded-lg text-foreground transition-colors cursor-pointer">
                       <input 
                         type="file" 
                         onChange={handleFileUpload} 
@@ -289,7 +289,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
                 )}
               </div>
             ) : (
-              <button disabled={isSaving} onClick={saveFile} className="flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg text-white transition-colors disabled:opacity-50">
+              <button disabled={isSaving} onClick={saveFile} className="flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-500 rounded-lg text-foreground transition-colors disabled:opacity-50">
                 {isSaving ? <div className="w-4 h-4 rounded-full border-2 border-white/50 border-t-white animate-spin"></div> : <Save size={16} />}
               </button>
             )}
@@ -314,19 +314,19 @@ export default function FileManager({ serverId }: { serverId: string }) {
         {!editingFile ? (
           <div className="relative hidden sm:block">
             {uploadProgress !== null ? (
-              <div className="flex items-center space-x-2 px-4 py-2 bg-indigo-600/50 rounded-lg text-sm font-medium border border-indigo-500/50 text-white">
+              <div className="flex items-center space-x-2 px-4 py-2 bg-indigo-600/50 rounded-lg text-sm font-medium border border-indigo-500/50 text-foreground">
                 <div className="w-4 h-4 rounded-full border-2 border-indigo-200 border-t-transparent animate-spin mr-1"></div>
                 <span>{uploadProgress === 100 ? "Processing..." : `${uploadProgress}%`}</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <button onClick={handleCreateFile} className="flex items-center space-x-2 px-4 py-2.5 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-full text-sm font-medium text-white transition-colors backdrop-blur-sm border border-white/5 cursor-pointer">
+                <button onClick={handleCreateFile} className="flex items-center space-x-2 px-4 py-2.5 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-full text-sm font-medium text-foreground transition-colors backdrop-blur-sm border border-border-subtle cursor-pointer">
                   <FilePlus size={16} /> <span className="hidden md:inline">New File</span>
                 </button>
-                <button onClick={handleCreateFolder} className="flex items-center space-x-2 px-4 py-2.5 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-full text-sm font-medium text-white transition-colors backdrop-blur-sm border border-white/5 cursor-pointer">
+                <button onClick={handleCreateFolder} className="flex items-center space-x-2 px-4 py-2.5 bg-zinc-800/80 hover:bg-zinc-700/80 rounded-full text-sm font-medium text-foreground transition-colors backdrop-blur-sm border border-border-subtle cursor-pointer">
                   <FolderPlus size={16} /> <span className="hidden md:inline">New Folder</span>
                 </button>
-                <label className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600/90 hover:bg-indigo-500/90 rounded-full text-sm font-medium text-white transition-colors backdrop-blur-sm shadow-lg shadow-indigo-500/20 cursor-pointer">
+                <label className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600/90 hover:bg-indigo-500/90 rounded-full text-sm font-medium text-foreground transition-colors backdrop-blur-sm shadow-lg shadow-indigo-500/20 cursor-pointer">
                   <input 
                     type="file" 
                     onChange={handleFileUpload} 
@@ -338,7 +338,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
             )}
           </div>
         ) : (
-          <button disabled={isSaving} onClick={saveFile} className="hidden sm:flex items-center space-x-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-full text-sm font-medium text-white transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50">
+          <button disabled={isSaving} onClick={saveFile} className="hidden sm:flex items-center space-x-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-full text-sm font-medium text-foreground transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50">
             {isSaving ? <div className="w-4 h-4 rounded-full border-2 border-white/50 border-t-white animate-spin"></div> : <Save size={16} />}
             <span>{isSaving ? "Saving..." : "Save"}</span>
           </button>
@@ -369,7 +369,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
               {/* Header row with select all */}
               {filteredFiles.length > 0 && (
                 <div className="flex items-center px-3 py-2 mb-2 border-b border-gray-700/50">
-                  <button onClick={toggleSelectAll} className="text-gray-400 hover:text-white mr-4 transition-colors">
+                  <button onClick={toggleSelectAll} className="text-gray-400 hover:text-foreground mr-4 transition-colors">
                     {selectedFiles.size === filteredFiles.length ? <CheckSquare size={18} className="text-indigo-400" /> : <Square size={18} />}
                   </button>
                   <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Name</span>
@@ -401,7 +401,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
                             onChange={e => setNewName(e.target.value)}
                             onBlur={() => handleRename(f.name)}
                             onKeyDown={e => e.key === 'Enter' && handleRename(f.name)}
-                            className="bg-gray-900/80 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-indigo-500/50 w-full"
+                            className="bg-gray-900/80 border border-gray-600 rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:border-indigo-500/50 w-full"
                           />
                         ) : (
                           <span className="font-medium text-gray-200 text-sm truncate">{f.name}</span>

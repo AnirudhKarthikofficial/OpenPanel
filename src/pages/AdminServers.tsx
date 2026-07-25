@@ -88,18 +88,18 @@ export default function AdminServers() {
   );
 
   return (
-    <div className="p-5 md:p-10 max-w-7xl mx-auto text-white">
+    <div className="w-full relative z-10 text-foreground">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Manage Servers</h1>
-        <p className="text-zinc-400">View and manage all instances across the panel.</p>
+        <p className="text-muted-foreground">View and manage all instances across the panel.</p>
       </div>
 
-      <div className="bg-black/20 border border-white/10 rounded-xl p-4 mb-6 flex items-center">
-        <Search className="w-5 h-5 text-zinc-400 mr-3" />
+      <div className="bg-muted border border-border rounded-xl p-4 mb-6 flex items-center">
+        <Search className="w-5 h-5 text-muted-foreground mr-3" />
         <input 
           type="text"
           placeholder="Search servers by name or ID..."
-          className="bg-transparent outline-none flex-1 text-white"
+          className="bg-transparent outline-none flex-1 text-foreground"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -112,14 +112,14 @@ export default function AdminServers() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredServers.map(server => (
-            <div key={server.id} className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div key={server.id} className="bg-muted border border-border rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-indigo-500/10 rounded-lg flex items-center justify-center border border-indigo-500/20">
                   <Server className="text-indigo-400 w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">{server.name}</h3>
-                  <div className="flex gap-3 text-sm text-zinc-400 mt-1">
+                  <div className="flex gap-3 text-sm text-muted-foreground mt-1">
                     <span>{server.type} • {server.version}</span>
                     <span>Owner: {getUsername(server.owner)}</span>
                     {server.suspended && <span className="text-red-400 font-bold ml-2">SUSPENDED</span>}
@@ -140,7 +140,7 @@ export default function AdminServers() {
                 />
                 <Link 
                   to={`/servers/${server.id}`}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors sm:ml-2 border border-indigo-400/20 text-sm font-medium shadow-md shadow-indigo-500/20"
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-foreground rounded-lg transition-colors sm:ml-2 border border-indigo-400/20 text-sm font-medium shadow-md shadow-indigo-500/20"
                 >
                   <span className="hidden sm:inline">Console</span>
                   <ChevronRight className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function AdminServers() {
             </div>
           ))}
           {filteredServers.length === 0 && (
-            <div className="text-center py-10 text-zinc-500">
+            <div className="text-center py-10 text-muted-foreground">
               No servers found matching your search.
             </div>
           )}
@@ -164,26 +164,26 @@ export default function AdminServers() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#121214] border border-white/10 rounded-2xl p-6 max-w-md w-full"
+              className="bg-[#121214] border border-border rounded-2xl p-6 max-w-md w-full"
             >
               <h2 className="text-xl font-bold mb-4">Edit Resources for {editingServer.name}</h2>
               <form onSubmit={handleUpdateResources}>
                 <div className="space-y-4 mb-6">
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">RAM (GB)</label>
-                    <input type="number" value={ram} onChange={e => setRam(e.target.value)} required min="1" className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white outline-none" />
+                    <label className="block text-sm text-muted-foreground mb-1">RAM (GB)</label>
+                    <input type="number" value={ram} onChange={e => setRam(e.target.value)} required min="1" className="w-full bg-muted border border-border rounded-lg p-2 text-foreground outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">CPU (%)</label>
-                    <input type="number" value={cpu} onChange={e => setCpu(e.target.value)} required min="50" className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white outline-none" />
+                    <label className="block text-sm text-muted-foreground mb-1">CPU (%)</label>
+                    <input type="number" value={cpu} onChange={e => setCpu(e.target.value)} required min="50" className="w-full bg-muted border border-border rounded-lg p-2 text-foreground outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm text-zinc-400 mb-1">Disk (GB)</label>
-                    <input type="number" value={disk} onChange={e => setDisk(e.target.value)} required min="1" className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-white outline-none" />
+                    <label className="block text-sm text-muted-foreground mb-1">Disk (GB)</label>
+                    <input type="number" value={disk} onChange={e => setDisk(e.target.value)} required min="1" className="w-full bg-muted border border-border rounded-lg p-2 text-foreground outline-none" />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button type="button" onClick={() => setEditingServer(null)} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg">Cancel</button>
+                  <button type="button" onClick={() => setEditingServer(null)} className="px-4 py-2 bg-muted hover:bg-muted-hover rounded-lg">Cancel</button>
                   <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold">Save Changes</button>
                 </div>
               </form>
@@ -200,16 +200,16 @@ export default function AdminServers() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#121214] border border-white/10 rounded-2xl p-6 max-w-md w-full"
+              className="bg-[#121214] border border-border rounded-2xl p-6 max-w-md w-full"
             >
               <h2 className="text-xl font-bold mb-4">Manage Suspension for {suspendingServer.name}</h2>
               <form onSubmit={handleUpdateSuspend}>
                 <div className="mb-6">
-                  <label className="block text-sm text-zinc-400 mb-2">Suspension Duration</label>
+                  <label className="block text-sm text-muted-foreground mb-2">Suspension Duration</label>
                   <select 
                     value={suspendDuration} 
                     onChange={e => setSuspendDuration(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white outline-none"
+                    className="w-full bg-muted border border-border rounded-lg p-3 text-foreground outline-none"
                   >
                     <option value="null">Not Suspended (Active)</option>
                     <option value="24_hours">24 Hours</option>
@@ -220,7 +220,7 @@ export default function AdminServers() {
                   </select>
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button type="button" onClick={() => setSuspendingServer(null)} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg">Cancel</button>
+                  <button type="button" onClick={() => setSuspendingServer(null)} className="px-4 py-2 bg-muted hover:bg-muted-hover rounded-lg">Cancel</button>
                   <button type="submit" className="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg font-bold">Apply</button>
                 </div>
               </form>
@@ -240,9 +240,9 @@ export default function AdminServers() {
               className="bg-[#121214] border border-red-500/30 rounded-2xl p-6 max-w-md w-full"
             >
               <h2 className="text-xl font-bold mb-2 text-red-400">Delete Server?</h2>
-              <p className="text-zinc-400 mb-6">Are you sure you want to permanently delete <strong>{deletingServer.name}</strong>? This action cannot be undone and will destroy all data.</p>
+              <p className="text-muted-foreground mb-6">Are you sure you want to permanently delete <strong>{deletingServer.name}</strong>? This action cannot be undone and will destroy all data.</p>
               <div className="flex justify-end gap-3">
-                <button onClick={() => setDeletingServer(null)} className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg">Cancel</button>
+                <button onClick={() => setDeletingServer(null)} className="px-4 py-2 bg-muted hover:bg-muted-hover rounded-lg">Cancel</button>
                 <button onClick={handleDelete} className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg font-bold">Yes, Delete</button>
               </div>
             </motion.div>
@@ -271,7 +271,7 @@ function ActionMenu({ server, setEditingServer, setRam, setCpu, setDisk, setSusp
     <div className="relative" onClick={e => e.stopPropagation()}>
       <button 
         onClick={() => setOpen(!open)}
-        className="p-2 bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white rounded-lg transition-colors border border-white/5"
+        className="p-2 bg-muted hover:bg-muted-hover text-foreground-muted hover:text-foreground rounded-lg transition-colors border border-border-subtle"
       >
         <MoreVertical className="w-5 h-5" />
       </button>
@@ -283,7 +283,7 @@ function ActionMenu({ server, setEditingServer, setRam, setCpu, setDisk, setSusp
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-48 bg-[#1a1a1f] border border-white/10 rounded-xl shadow-xl z-40 overflow-hidden flex flex-col py-1"
+            className="absolute right-0 mt-2 w-48 bg-[#1a1a1f] border border-border rounded-xl shadow-xl z-40 overflow-hidden flex flex-col py-1"
           >
             <button 
               onClick={() => {
@@ -293,7 +293,7 @@ function ActionMenu({ server, setEditingServer, setRam, setCpu, setDisk, setSusp
                 setDisk(server.disk.toString());
                 setOpen(false);
               }}
-              className="flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 hover:text-white transition-colors text-left"
+              className="flex items-center px-4 py-2.5 text-sm text-foreground-muted hover:bg-muted hover:text-foreground transition-colors text-left"
             >
               <Edit2 className="w-4 h-4 mr-3 text-blue-400" />
               Edit Resources
@@ -304,12 +304,12 @@ function ActionMenu({ server, setEditingServer, setRam, setCpu, setDisk, setSusp
                 setSuspendDuration(server.suspendDuration || "null");
                 setOpen(false);
               }}
-              className="flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 hover:text-white transition-colors text-left"
+              className="flex items-center px-4 py-2.5 text-sm text-foreground-muted hover:bg-muted hover:text-foreground transition-colors text-left"
             >
               <PauseCircle className="w-4 h-4 mr-3 text-amber-400" />
               {server.suspended ? "Manage Suspension" : "Suspend Server"}
             </button>
-            <div className="h-px bg-white/10 my-1 mx-2"></div>
+            <div className="h-px bg-muted-hover my-1 mx-2"></div>
             <button 
               onClick={() => {
                 setDeletingServer(server);
