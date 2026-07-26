@@ -109,6 +109,9 @@ export async function initSFTPServer() {
   server.listen(SFTP_PORT, "0.0.0.0", () => {
     console.log(`SFTP server listening on port ${SFTP_PORT}`);
   });
+
+  process.on("SIGTERM", () => server.close());
+  process.on("SIGINT", () => server.close());
 }
 
 export async function createSftpUser(serverId: string) {
