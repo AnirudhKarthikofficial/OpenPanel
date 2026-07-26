@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: "jtg-panel",
-      script: "./dist/server.cjs",
+      script: "npm",
+      args: "start",
       instances: 1,
       autorestart: true,
       watch: false,

@@ -64,24 +64,27 @@ export const createServerContainer = async (serverData: any) => {
 
   const pullImageStream = async (imgTag: string) => {
     console.log(`Pulling image ${imgTag}...`);
+    const { exec } = require("child_process");
+    const { promisify } = require("util");
+    const execAsync = promisify(exec);
+    const engine = process.env.CONTAINER_ENGINE === "podman" ? "podman" : "docker";
+    
     try {
+      console.log(`Executing: ${engine} pull ${imgTag}`);
+      const { stdout, stderr } = await execAsync(`${engine} pull ${imgTag}`);
+      console.log(`${engine} pull stdout:`, stdout);
+      if (stderr) console.warn(`${engine} pull stderr:`, stderr);
+    } catch (cliErr) {
+      console.warn(`CLI pull failed for ${imgTag}: ${cliErr}. Trying Docker API fallback...`);
       await new Promise((resolve, reject) => {
         docker.pull(imgTag, (err: any, stream: any) => {
           if (err) return reject(err);
-          docker.modem.followProgress(stream, onFinished);
-          function onFinished(err: any, output: any) {
+          docker.modem.followProgress(stream, (err: any, output: any) => {
             if (err) return reject(err);
             resolve(output);
-          }
+          });
         });
       });
-    } catch (apiErr) {
-      console.warn(`Docker API pull failed for ${imgTag}: ${apiErr}. Trying CLI fallback...`);
-      const { exec } = require("child_process");
-      const { promisify } = require("util");
-      const execAsync = promisify(exec);
-      const engine = process.env.CONTAINER_ENGINE === "podman" ? "podman" : "docker";
-      await execAsync(`${engine} pull ${imgTag}`);
     }
   };
 
