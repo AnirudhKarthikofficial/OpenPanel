@@ -95,7 +95,9 @@ install_panel() {
     echo "2) Podman (Daemonless, better for some VPS/Sandbox environments)"
     read -p "Choose engine (1/2) [default: 1]: " ENGINE_CHOICE
 
+    SELECTED_ENGINE="docker"
     if [ "$ENGINE_CHOICE" == "2" ]; then
+        SELECTED_ENGINE="podman"
         log_info "Installing Podman..."
         if ! command -v podman &> /dev/null; then
             if command -v apt-get &> /dev/null; then
@@ -153,6 +155,13 @@ install_panel() {
             echo "PORT=6767" > .env
             echo "JWT_SECRET=$(head -c 32 /dev/urandom | base64)" >> .env
         fi
+    fi
+    
+    # Save or update CONTAINER_ENGINE in .env
+    if grep -q "CONTAINER_ENGINE=" .env 2>/dev/null; then
+        sed -i "s/CONTAINER_ENGINE=.*/CONTAINER_ENGINE=$SELECTED_ENGINE/" .env
+    else
+        echo "CONTAINER_ENGINE=$SELECTED_ENGINE" >> .env
     fi
     
     # Ensure ecosystem.config.cjs exists for PM2

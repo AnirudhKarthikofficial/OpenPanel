@@ -6,15 +6,25 @@ import { readJSON } from "./db.js";
 
 const getSocketPath = () => {
   if (process.platform === 'win32') return '//./pipe/docker_engine';
-  if (fs.existsSync('/var/run/docker.sock')) return '/var/run/docker.sock';
+  if (process.env.DOCKER_SOCKET_PATH && fs.existsSync(process.env.DOCKER_SOCKET_PATH)) {
+    return process.env.DOCKER_SOCKET_PATH;
+  }
+  if (process.env.CONTAINER_ENGINE === 'podman') {
+    if (fs.existsSync('/run/podman/podman.sock')) return '/run/podman/podman.sock';
+    if (fs.existsSync('/var/run/podman/podman.sock')) return '/var/run/podman/podman.sock';
+  }
   if (fs.existsSync('/run/podman/podman.sock')) return '/run/podman/podman.sock';
+  if (fs.existsSync('/var/run/podman/podman.sock')) return '/var/run/podman/podman.sock';
+  if (fs.existsSync('/var/run/docker.sock')) return '/var/run/docker.sock';
   if (fs.existsSync('/run/docker.sock')) return '/run/docker.sock';
   return '/var/run/docker.sock';
 };
 
 export const isSandbox = !fs.existsSync('/var/run/docker.sock') &&
   !fs.existsSync('/run/podman/podman.sock') &&
+  !fs.existsSync('/var/run/podman/podman.sock') &&
   !fs.existsSync('/run/docker.sock') &&
+  !(process.env.DOCKER_SOCKET_PATH && fs.existsSync(process.env.DOCKER_SOCKET_PATH)) &&
   process.platform !== 'win32';
 
 export const docker = new Docker({ socketPath: getSocketPath() });
