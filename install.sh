@@ -87,16 +87,41 @@ install_dependencies() {
     else
         log_success "PM2 is already installed."
     fi
+}
 
-    # Check / Install Docker
-    if ! command -v docker &> /dev/null; then
-        log_info "Installing Docker..."
-        curl -fsSL https://get.docker.com | sh || log_warning "Docker auto-install skipped or failed. You can install Docker manually if needed."
-        if command -v systemctl &> /dev/null; then
-            sudo systemctl enable --now docker || true
+install_docker() {
+    log_info "Installing Docker..."
+    if command -v docker &> /dev/null; then
+        log_success "Docker is already installed."
+        return
+    fi
+    curl -fsSL https://get.docker.com | sh || log_warning "Docker auto-install skipped or failed. You can install Docker manually if needed."
+    if command -v systemctl &> /dev/null; then
+        sudo systemctl enable --now docker || true
+    fi
+}
+
+install_podman() {
+    log_info "Installing Podman..."
+    if command -v podman &> /dev/null; then
+        log_success "Podman is already installed."
+    else
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get install -y podman podman-docker || true
+        elif command -v yum &> /dev/null; then
+            sudo yum install -y podman podman-docker || true
+        fi
+    fi
+
+    if command -v podman &> /dev/null; then
+        log_success "Podman setup complete!"
+        if ! [ -S /run/podman/podman.sock ]; then
+            log_info "Starting Podman API socket service on native socket..."
+            mkdir -p /run/podman
+            nohup podman system service --time=0 unix:///run/podman/podman.sock &> /dev/null &
         fi
     else
-        log_success "Docker is already installed."
+        log_warning "Could not auto-install Podman. Please install docker or podman manually if running game containers."
     fi
 }
 
@@ -106,6 +131,17 @@ install_panel() {
 
     check_root
     install_dependencies
+
+    echo -e "\n${BOLD}Select Container Engine for initial setup:${RESET}"
+    echo "1) Docker (Requires systemd/systemctl)"
+    echo "2) Podman (Daemonless, works without systemd)"
+    read -p "Choose engine (1/2) [default: 1]: " ENGINE_CHOICE
+
+    if [ "$ENGINE_CHOICE" == "2" ]; then
+        install_podman
+    else
+        install_docker
+    fi
 
     # Determine work directory
     CURRENT_DIR=$(pwd)
@@ -164,6 +200,34 @@ install_panel() {
 update_panel() {
     print_banner
     echo -e "${BOLD}--- [2] Update JTG Panel ---${RESET}\n"
+
+    # Detect current engine
+    if command -v docker &> /dev/null; then
+        DETECTED_ENGINE="Docker"
+    elif command -v podman &> /dev/null; then
+        DETECTED_ENGINE="Podman"
+    else
+        DETECTED_ENGINE="None"
+    fi
+
+    echo -e "Detected Container Engine: ${CYAN}${DETECTED_ENGINE}${RESET}"
+    echo -e "Do you want to continue using this engine, or switch?"
+    echo "1) Continue with current setup"
+    echo "2) Switch to / Update Docker"
+    echo "3) Switch to / Update Podman"
+    read -p "Choose (1/2/3) [default: 1]: " UPDATE_ENGINE_CHOICE
+
+    if [ "$UPDATE_ENGINE_CHOICE" == "2" ]; then
+        install_docker
+    elif [ "$UPDATE_ENGINE_CHOICE" == "3" ]; then
+        install_podman
+    else
+        if [ "$DETECTED_ENGINE" == "Docker" ]; then
+            install_docker
+        elif [ "$DETECTED_ENGINE" == "Podman" ]; then
+            install_podman
+        fi
+    fi
 
     log_info "Pulling latest code updates..."
     git pull

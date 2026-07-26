@@ -4,9 +4,20 @@ import path from "path";
 import { io } from "../../../server.js"; // Import socket for logs
 import { readJSON } from "./db.js";
 
-export const isSandbox = !fs.existsSync("/var/run/docker.sock") && process.platform !== "win32";
+const getSocketPath = () => {
+  if (process.platform === 'win32') return '//./pipe/docker_engine';
+  if (fs.existsSync('/var/run/docker.sock')) return '/var/run/docker.sock';
+  if (fs.existsSync('/run/podman/podman.sock')) return '/run/podman/podman.sock';
+  if (fs.existsSync('/run/docker.sock')) return '/run/docker.sock';
+  return '/var/run/docker.sock';
+};
 
-export const docker = new Docker({ socketPath: process.platform === 'win32' ? '//./pipe/docker_engine' : '/var/run/docker.sock' });
+export const isSandbox = !fs.existsSync('/var/run/docker.sock') &&
+  !fs.existsSync('/run/podman/podman.sock') &&
+  !fs.existsSync('/run/docker.sock') &&
+  process.platform !== 'win32';
+
+export const docker = new Docker({ socketPath: getSocketPath() });
 
 // Mock state for sandbox demo
 const mockState: Record<string, boolean> = {};
