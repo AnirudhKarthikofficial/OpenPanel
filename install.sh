@@ -71,14 +71,18 @@ install_dependencies() {
         log_warning "Package manager not explicitly handled. Assuming core utilities exist."
     fi
 
-    # Check / Install Node.js (v20 LTS recommended)
-    if ! command -v node &> /dev/null || [ $(node -v | cut -d'.' -f1 | tr -d 'v') -lt 18 ]; then
-        log_info "Installing Node.js v20 (LTS)..."
-        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    # Check / Install Node.js (v22 LTS recommended)
+    if ! command -v node &> /dev/null || [ $(node -v | cut -d'.' -f1 | tr -d 'v') -lt 20 ]; then
+        log_info "Installing Node.js v22 (LTS)..."
+        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
         sudo apt-get install -y nodejs || sudo yum install -y nodejs
     else
         log_success "Node.js $(node -v) is already installed."
     fi
+
+    log_info "Updating npm to the latest version..."
+    sudo npm install -g npm@latest
+
 
     # Check / Install PM2 globally
     if ! command -v pm2 &> /dev/null; then
