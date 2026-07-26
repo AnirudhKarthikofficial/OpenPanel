@@ -41,8 +41,6 @@ export const getVersions = async (type: string = "PAPER") => {
   ];
 };
 
-const DOCKER_IMAGE = "itzg/minecraft-server";
-
 export const createServerContainer = async (serverData: any) => {
   if (isSandbox) {
     mockState[serverData.id] = false;
@@ -52,8 +50,8 @@ export const createServerContainer = async (serverData: any) => {
   const serverType = serverData.type || "PAPER";
   const isProxy = ["VELOCITY", "BUNGEECORD", "WATERFALL"].includes(serverType.toUpperCase());
   const dockerImage = isProxy
-    ? "itzg/bungeecord" 
-    : "itzg/minecraft-server";
+    ? "docker.io/itzg/bungeecord:latest" 
+    : "docker.io/itzg/minecraft-server:latest";
 
   // Pull image if not exists
   console.log(`Ensuring ${dockerImage} is pulled...`);
