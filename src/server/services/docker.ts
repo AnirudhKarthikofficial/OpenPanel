@@ -59,23 +59,45 @@ export const createServerContainer = async (serverData: any) => {
 
   const serverType = serverData.type || "PAPER";
   const isProxy = ["VELOCITY", "BUNGEECORD", "WATERFALL"].includes(serverType.toUpperCase());
-  const dockerImage = isProxy
-    ? "docker.io/itzg/bungeecord:latest" 
-    : "docker.io/itzg/minecraft-server:latest";
+  const shortImage = isProxy ? "itzg/bungeecord:latest" : "itzg/minecraft-server:latest";
+  const fullImage = isProxy ? "docker.io/itzg/bungeecord:latest" : "docker.io/itzg/minecraft-server:latest";
 
-  // Pull image if not exists
-  console.log(`Ensuring ${dockerImage} is pulled...`);
-  await new Promise((resolve, reject) => {
-    docker.pull(dockerImage, (err: any, stream: any) => {
-      if (err) return reject(err);
-      docker.modem.followProgress(stream, onFinished, onProgress);
-      function onFinished(err: any, output: any) {
+  const pullImageStream = async (imgTag: string) => {
+    console.log(`Pulling image ${imgTag}...`);
+    return new Promise((resolve, reject) => {
+      docker.pull(imgTag, (err: any, stream: any) => {
         if (err) return reject(err);
-        resolve(output);
-      }
-      function onProgress(event: any) {}
+        docker.modem.followProgress(stream, onFinished);
+        function onFinished(err: any, output: any) {
+          if (err) return reject(err);
+          resolve(output);
+        }
+      });
     });
-  });
+  };
+
+  const ensureImage = async (): Promise<string> => {
+    try {
+      await docker.getImage(shortImage).inspect();
+      return shortImage;
+    } catch (e) {}
+
+    try {
+      await docker.getImage(fullImage).inspect();
+      return fullImage;
+    } catch (e) {}
+
+    try {
+      await pullImageStream(shortImage);
+      return shortImage;
+    } catch (e) {
+      console.warn(`Failed to pull ${shortImage}, trying ${fullImage}...`, e);
+      await pullImageStream(fullImage);
+      return fullImage;
+    }
+  };
+
+  const targetImage = await ensureImage();
 
   const serverDir = path.join(process.cwd(), ".data", "servers", serverData.id);
   await fs.ensureDir(serverDir);
@@ -98,8 +120,8 @@ export const createServerContainer = async (serverData: any) => {
     );
   }
 
-  const container = await docker.createContainer({
-    Image: dockerImage,
+  const buildContainerOptions = (img: string) => ({
+    Image: img,
     name: `jtg-server-${serverData.id}`,
     Tty: true,
     OpenStdin: true,
@@ -119,6 +141,27 @@ export const createServerContainer = async (serverData: any) => {
       Binds: [`${serverDir}:${isProxy ? '/server' : '/data'}`]
     }
   });
+
+  let container;
+  try {
+    container = await docker.createContainer(buildContainerOptions(targetImage));
+  } catch (err: any) {
+    const errStr = String(err?.message || err);
+    if (err?.statusCode === 404 || errStr.includes("404") || errStr.includes("no such image")) {
+      const altImage = targetImage === shortImage ? fullImage : shortImage;
+      console.log(`404 image error with ${targetImage}. Attempting fallback with ${altImage}...`);
+      try {
+        await pullImageStream(altImage);
+        container = await docker.createContainer(buildContainerOptions(altImage));
+      } catch (fallbackErr) {
+        console.log(`Pulling ${targetImage} directly and retrying...`);
+        await pullImageStream(targetImage);
+        container = await docker.createContainer(buildContainerOptions(targetImage));
+      }
+    } else {
+      throw err;
+    }
+  }
 
   return container.id;
 };
