@@ -62,6 +62,19 @@ export const createServerContainer = async (serverData: any) => {
   const shortImage = isProxy ? "itzg/bungeecord:latest" : "itzg/minecraft-server:latest";
   const fullImage = isProxy ? "docker.io/itzg/bungeecord:latest" : "docker.io/itzg/minecraft-server:latest";
 
+  const findImageId = async (): Promise<string | null> => {
+    try {
+      const images = await docker.listImages();
+      const matched = images.find(img => 
+        img.RepoTags && img.RepoTags.some(tag => tag.includes(shortImage) || tag.includes(fullImage))
+      );
+      if (matched) return matched.Id;
+    } catch(e) {
+      console.warn("Failed to list images:", e);
+    }
+    return null;
+  };
+
   const pullImageStream = async (imgTag: string) => {
     console.log(`Pulling image ${imgTag}...`);
     const { exec } = require("child_process");
@@ -89,24 +102,23 @@ export const createServerContainer = async (serverData: any) => {
   };
 
   const ensureImage = async (): Promise<string> => {
-    try {
-      await docker.getImage(shortImage).inspect();
-      return shortImage;
-    } catch (e) {}
-
-    try {
-      await docker.getImage(fullImage).inspect();
-      return fullImage;
-    } catch (e) {}
+    let existingId = await findImageId();
+    if (existingId) return existingId;
 
     try {
       await pullImageStream(shortImage);
-      return shortImage;
+      let idAfterShort = await findImageId();
+      if (idAfterShort) return idAfterShort;
     } catch (e) {
-      console.warn(`Failed to pull ${shortImage}, trying ${fullImage}...`, e);
-      await pullImageStream(fullImage);
-      return fullImage;
+      console.warn(`Failed to pull ${shortImage}...`, e);
     }
+
+    console.warn(`Attempting fallback pull with ${fullImage}...`);
+    await pullImageStream(fullImage);
+    let idAfterFull = await findImageId();
+    if (idAfterFull) return idAfterFull;
+
+    return shortImage; // Fallback to string tag if we somehow couldn't find ID
   };
 
   const targetImage = await ensureImage();
