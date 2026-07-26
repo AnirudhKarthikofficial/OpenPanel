@@ -1,178 +1,57 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# =========================================================
-# JTG Panel - Automated Installation & Management Script
-# Repository: https://github.com/JishnuTheGamer/Jtg
-# =========================================================
-
-set -e
-
-# Colors for UI
+# Set colors for a better-looking menu
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
-BOLD='\033[1m'
-RESET='\033[0m'
+NC='\033[0m' # No Color
 
-# Default Installation Directory
-INSTALL_DIR="/opt/jtg-panel"
-REPO_URL="https://github.com/JishnuTheGamer/Jtg.git"
+# Function to install the panel
+install_panel() {
+    echo -e "\n${CYAN}[+] Installing dependencies... Please wait...${NC}"
+    
+    # Update system package index
+    sudo apt update -y
+    
+    # Install curl and git
+    sudo apt install curl git -y
+    
+    # Setup and install Node.js 20.x
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt install -y nodejs 
+    
+    # Install PM2 globally
+    sudo npm install -g pm2
 
-print_banner() {
-    clear
-    echo -e "${CYAN}${BOLD}"
-    echo "  ========================================================"
-    echo "   _____ _____ _____   _____                  _           "
-    echo "  |_   _|_   _/ ____| |  __ \                | |          "
-    echo "    | |   | | | |  __ | |__) |__ _ n  ___| |          "
-    echo "    | |   | | | | |_ ||  ___/ _ \ ' \/ _ \ |          "
-    echo "   _| |_  | | | |__| || |  |  __/ | | |  __/ |          "
-    echo "  |_____| |_|  \____||_|   \___|_| |_|\___|_|          "
-    echo "                                                          "
-    echo "            JTG PANEL MANAGEMENT & INSTALLER              "
-    echo "            Main Panel Default Port: 6767                 "
-    echo "  ========================================================"
-    echo -e "${RESET}"
-}
-
-log_info() {
-    echo -e "${BLUE}[INFO]${RESET} $1"
-}
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${RESET} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${RESET} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${RESET} $1"
-}
-
-check_root() {
-    if [ "$EUID" -ne 0 ]; then
-        log_warning "This script is recommended to be run as root or with sudo for system dependency installation."
-    fi
-}
-
-install_dependencies() {
-    log_info "Updating system package lists..."
-    if command -v apt-get &> /dev/null; then
-        sudo apt-get update -y || true
-        sudo apt-get install -y curl wget git build-essential ca-certificates gnupg lsb-release || log_warning "Some packages failed to install. Continuing..."
-    elif command -v yum &> /dev/null; then
-        sudo yum update -y || true
-        sudo yum install -y curl wget git make gcc-c++ ca-certificates || log_warning "Some packages failed to install. Continuing..."
-    else
-        log_warning "Package manager not explicitly handled. Assuming core utilities exist."
-    fi
-
-    # Check / Install Node.js (v22 LTS recommended)
-    if ! command -v node &> /dev/null || [ $(node -v | cut -d'.' -f1 | tr -d 'v') -lt 20 ]; then
-        log_info "Installing Node.js v22 (LTS)..."
-        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-        sudo apt-get install -y nodejs || sudo yum install -y nodejs
-    else
-        log_success "Node.js $(node -v) is already installed."
-    fi
-
-    log_info "Updating npm to the latest version..."
-    sudo npm install -g npm@latest
-
-
-    # Check / Install PM2 globally
-    if ! command -v pm2 &> /dev/null; then
-        log_info "Installing PM2 globally..."
-        sudo npm install -g pm2
-    else
-        log_success "PM2 is already installed."
-    fi
-}
-
-install_docker() {
-    log_info "Installing Docker..."
-    if command -v docker &> /dev/null; then
-        log_success "Docker is already installed."
-        return
-    fi
-    curl -fsSL https://get.docker.com | sh || log_warning "Docker auto-install skipped or failed. You can install Docker manually if needed."
-    if command -v systemctl &> /dev/null; then
+    # Install Docker if not present (Required for the panel containers)
+    if ! command -v docker &> /dev/null && ! command -v podman &> /dev/null; then
+        echo -e "\n${CYAN}[+] Installing Docker...${NC}"
+        curl -fsSL https://get.docker.com | sh
         sudo systemctl enable --now docker || true
     fi
-}
 
-install_podman() {
-    log_info "Installing Podman..."
-    if command -v podman &> /dev/null; then
-        log_success "Podman is already installed."
+    echo -e "\n${CYAN}[+] Downloading and setting up the Jtg Panel...${NC}"
+    
+    # Check if we are already in the Jtg directory
+    if [ -f "package.json" ] && grep -q "react-example" "package.json" 2>/dev/null; then
+        echo -e "${YELLOW}[!] It looks like you are already inside the Jtg panel directory. Running setup here...${NC}"
+        WORK_DIR="."
+    elif [ -d "Jtg" ]; then
+        echo -e "${YELLOW}[!] The 'Jtg' folder already exists. Running setup inside it...${NC}"
+        WORK_DIR="Jtg"
     else
-        if command -v apt-get &> /dev/null; then
-            sudo apt-get install -y podman podman-docker || true
-        elif command -v yum &> /dev/null; then
-            sudo yum install -y podman podman-docker || true
-        fi
+        # Clone from GitHub
+        git clone https://github.com/JishnuTheGamer/Jtg
+        WORK_DIR="Jtg"
     fi
-
-    if command -v podman &> /dev/null; then
-        log_success "Podman setup complete!"
-        if ! [ -S /run/podman/podman.sock ]; then
-            log_info "Starting Podman API socket service on native socket..."
-            mkdir -p /run/podman
-            nohup podman system service --time=0 unix:///run/podman/podman.sock &> /dev/null &
-        fi
-    else
-        log_warning "Could not auto-install Podman. Please install docker or podman manually if running game containers."
-    fi
-}
-
-install_panel() {
-    print_banner
-    echo -e "${BOLD}--- [1] Full Panel Installation ---${RESET}\n"
-
-    check_root
-    install_dependencies
-
-    echo -e "\n${BOLD}Select Container Engine for initial setup:${RESET}"
-    echo "1) Docker (Requires systemd/systemctl)"
-    echo "2) Podman (Daemonless, works without systemd)"
-    read -p "Choose engine (1/2) [default: 1]: " ENGINE_CHOICE
-
-    if [ "$ENGINE_CHOICE" == "2" ]; then
-        install_podman
-    else
-        install_docker
-    fi
-
-    # Determine work directory
-    CURRENT_DIR=$(pwd)
-    if [ -f "$CURRENT_DIR/package.json" ] && grep -q "react-example" "$CURRENT_DIR/package.json" 2>/dev/null; then
-        WORK_DIR="$CURRENT_DIR"
-        log_info "Running installation directly in current directory: $WORK_DIR"
-    else
-        echo -e "\nWhere would you like to install JTG Panel? (Default: $INSTALL_DIR)"
-        read -p "Target Path [$INSTALL_DIR]: " USER_PATH
-        WORK_DIR="${USER_PATH:-$INSTALL_DIR}"
-
-        if [ ! -d "$WORK_DIR" ]; then
-            log_info "Cloning repository from $REPO_URL to $WORK_DIR ..."
-            git clone "$REPO_URL" "$WORK_DIR"
-        else
-            log_info "Directory $WORK_DIR exists. Pulling latest code..."
-            cd "$WORK_DIR"
-            git pull || true
-        fi
-        cd "$WORK_DIR"
-    fi
-
-    log_info "Installing NPM dependencies..."
-    npm install
-
+    
+    # Navigate into the directory
+    cd "$WORK_DIR" || { echo -e "${RED}[!] Failed to enter the directory!${NC}"; return; }
+    
+    # Ensure .env exists
     if [ ! -f ".env" ]; then
-        log_info "Creating .env configuration file..."
         if [ -f ".env.example" ]; then
             cp .env.example .env
         else
@@ -180,144 +59,110 @@ install_panel() {
             echo "JWT_SECRET=$(head -c 32 /dev/urandom | base64)" >> .env
         fi
     fi
-
-    log_info "Building production bundles..."
-    npm run build
-
-    log_info "Creating Admin User..."
-    npm run createuser || log_warning "Admin user creation step skipped or requires user input."
-
-    log_info "Starting JTG Panel on port 6767 via PM2..."
-    if [ -f "ecosystem.config.cjs" ]; then
-        pm2 start ecosystem.config.cjs
-    else
-        pm2 start dist/server.cjs --name "jtg-panel" --env production
-    fi
-    pm2 save || true
-
-    log_success "========================================================"
-    log_success " JTG Panel successfully installed & started on PORT 6767!"
-    log_success " Access URL: http://<YOUR-SERVER-IP>:6767"
-    log_success "========================================================"
-}
-
-update_panel() {
-    print_banner
-    echo -e "${BOLD}--- [2] Update JTG Panel ---${RESET}\n"
-
-    # Detect current engine
-    if command -v docker &> /dev/null; then
-        DETECTED_ENGINE="Docker"
-    elif command -v podman &> /dev/null; then
-        DETECTED_ENGINE="Podman"
-    else
-        DETECTED_ENGINE="None"
+    
+    # Ensure ecosystem.config.cjs exists for PM2
+    if [ ! -f "ecosystem.config.cjs" ]; then
+cat << 'EOF' > ecosystem.config.cjs
+module.exports = {
+  apps: [
+    {
+      name: "jtg-panel",
+      script: "./dist/server.cjs",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "1G",
+      env: {
+        NODE_ENV: "production",
+        PORT: process.env.PORT || 6767
+      }
+    }
+  ]
+};
+EOF
     fi
 
-    echo -e "Detected Container Engine: ${CYAN}${DETECTED_ENGINE}${RESET}"
-    echo -e "Do you want to continue using this engine, or switch?"
-    echo "1) Continue with current setup"
-    echo "2) Switch to / Update Docker"
-    echo "3) Switch to / Update Podman"
-    read -p "Choose (1/2/3) [default: 1]: " UPDATE_ENGINE_CHOICE
-
-    if [ "$UPDATE_ENGINE_CHOICE" == "2" ]; then
-        install_docker
-    elif [ "$UPDATE_ENGINE_CHOICE" == "3" ]; then
-        install_podman
-    else
-        if [ "$DETECTED_ENGINE" == "Docker" ]; then
-            install_docker
-        elif [ "$DETECTED_ENGINE" == "Podman" ]; then
-            install_podman
-        fi
-    fi
-
-    log_info "Pulling latest code updates..."
-    git pull
-
-    log_info "Updating dependencies..."
-    npm install
-
-    log_info "Building updated production bundle..."
-    npm run build
-
-    log_info "Restarting PM2 process..."
-    if pm2 list | grep -q "jtg-panel"; then
-        pm2 restart jtg-panel
-    elif [ -f "ecosystem.config.cjs" ]; then
-        pm2 restart ecosystem.config.cjs || pm2 start ecosystem.config.cjs
-    else
-        npm run start &
-    fi
-
-    log_success "JTG Panel updated successfully!"
-}
-
-create_admin_user() {
-    print_banner
-    echo -e "${BOLD}--- [3] Create Admin User ---${RESET}\n"
-
-    log_info "Running admin creation script..."
+    # Install node modules
+    npm i 
+    
+    # Create user and build
     npm run createuser
-
-    log_success "Admin user operation complete."
-}
-
-restart_panel() {
-    print_banner
-    echo -e "${BOLD}--- [4] Restart JTG Panel ---${RESET}\n"
-
-    log_info "Restarting panel process..."
-    if command -v pm2 &> /dev/null; then
-        pm2 restart all || pm2 start ecosystem.config.cjs
-    else
-        log_warning "PM2 not found. Attempting npm run start..."
-        npm run start
+    npm run build
+    
+    # Start with PM2
+    pm2 start ecosystem.config.cjs
+    pm2 save
+    
+    echo -e "\n${GREEN}==========================================${NC}"
+    echo -e "${GREEN} [✓] Panel successfully installed and started!${NC}"
+    echo -e "${GREEN} MADE BY - JISHNU  | panel info  [Online] ${NC}"
+    echo -e "${GREEN}==========================================${NC}"
+    
+    # Return to the main directory
+    if [ "$WORK_DIR" = "Jtg" ]; then
+        cd ..
     fi
-
-    log_success "Panel restarted successfully!"
 }
 
-show_menu() {
-    while true; do
-        print_banner
-        echo -e "  ${BOLD}1)${RESET} Install Panel (Auto Setup - Port 6767)"
-        echo -e "  ${BOLD}2)${RESET} Update Panel"
-        echo -e "  ${BOLD}3)${RESET} Create Admin User"
-        echo -e "  ${BOLD}4)${RESET} Restart Panel"
-        echo -e "  ${BOLD}5)${RESET} Exit"
-        echo -e "\n========================================================"
-        read -p " Choose an option (1-5): " CHOICE
-
-        case "$CHOICE" in
-            1)
-                install_panel
-                read -p "Press Enter to return to main menu..."
-                ;;
-            2)
-                update_panel
-                read -p "Press Enter to return to main menu..."
-                ;;
-            3)
-                create_admin_user
-                read -p "Press Enter to return to main menu..."
-                ;;
-            4)
-                restart_panel
-                read -p "Press Enter to return to main menu..."
-                ;;
-            5)
-                echo -e "\nExiting installer. Goodbye!\n"
-                exit 0
-                ;;
-            *)
-                log_error "Invalid option! Please select 1, 2, 3, 4, or 5."
-                sleep 1.5
-                ;;
-        esac
-    done
+# Function to update the panel
+update_panel() {
+    echo -e "\n${CYAN}[+] Updating the panel...${NC}"
+    
+    if [ -f "package.json" ] && grep -q "react-example" "package.json" 2>/dev/null; then
+        WORK_DIR="."
+    elif [ -d "Jtg" ]; then
+        WORK_DIR="Jtg"
+    else
+        echo -e "${RED}[!] 'Jtg' directory not found! Please install the panel first (Option 1).${NC}"
+        return
+    fi
+    
+    cd "$WORK_DIR" || { echo -e "${RED}[!] Failed to enter the directory!${NC}"; return; }
+        
+    # Fetch new updates from GitHub
+    git stash
+    git pull
+    
+    # Update packages and rebuild
+    npm i 
+    npm run build 
+    
+    # Restart PM2 processes
+    pm2 restart all
+    
+    echo -e "\n${GREEN}[✓] Panel successfully updated and restarted!${NC}"
+    
+    # Return to the main directory
+    if [ "$WORK_DIR" = "Jtg" ]; then
+        cd ..
+    fi
 }
 
-# Run Menu
-show_menu
+# Main menu loop
+while true; do
+    echo -e "\n${YELLOW}========================================${NC}"
+    echo -e "${GREEN}       JTG PANEL MANAGER MENU           ${NC}"
+    echo -e "${YELLOW}========================================${NC}"
+    echo -e "${CYAN}1.${NC} Install Panel (Auto Setup)"
+    echo -e "${CYAN}2.${NC} Update Panel"
+    echo -e "${RED}3.${NC} Exit"
+    echo -e "${YELLOW}========================================${NC}"
+    
+    read -p "Choose an option (1/2/3): " choice
+
+    case $choice in
+        1)
+            install_panel
+            ;;
+        2)
+            update_panel
+            ;;
+        3)
+            echo -e "${YELLOW}Exiting script... Goodbye!${NC}"
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}[!] Invalid option! Please enter 1, 2, or 3.${NC}"
+            ;;
+    esac
+done
