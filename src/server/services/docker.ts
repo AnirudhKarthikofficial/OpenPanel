@@ -64,16 +64,25 @@ export const createServerContainer = async (serverData: any) => {
 
   const pullImageStream = async (imgTag: string) => {
     console.log(`Pulling image ${imgTag}...`);
-    return new Promise((resolve, reject) => {
-      docker.pull(imgTag, (err: any, stream: any) => {
-        if (err) return reject(err);
-        docker.modem.followProgress(stream, onFinished);
-        function onFinished(err: any, output: any) {
+    try {
+      await new Promise((resolve, reject) => {
+        docker.pull(imgTag, (err: any, stream: any) => {
           if (err) return reject(err);
-          resolve(output);
-        }
+          docker.modem.followProgress(stream, onFinished);
+          function onFinished(err: any, output: any) {
+            if (err) return reject(err);
+            resolve(output);
+          }
+        });
       });
-    });
+    } catch (apiErr) {
+      console.warn(`Docker API pull failed for ${imgTag}: ${apiErr}. Trying CLI fallback...`);
+      const { exec } = require("child_process");
+      const { promisify } = require("util");
+      const execAsync = promisify(exec);
+      const engine = process.env.CONTAINER_ENGINE === "podman" ? "podman" : "docker";
+      await execAsync(`${engine} pull ${imgTag}`);
+    }
   };
 
   const ensureImage = async (): Promise<string> => {
