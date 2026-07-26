@@ -88,43 +88,17 @@ install_panel() {
         log_success "PM2 is already installed."
     fi
 
-    # Docker or Podman Setup
-    echo -e "\n${CYAN}==========================================${NC}"
-    echo -e "${BOLD}Select Container Engine for the panel:${NC}"
-    echo "1) Docker (Requires systemd/systemctl)"
-    echo "2) Podman (Daemonless, better for some VPS/Sandbox environments)"
-    read -p "Choose engine (1/2) [default: 1]: " ENGINE_CHOICE
-
-    SELECTED_ENGINE="docker"
-    if [ "$ENGINE_CHOICE" == "2" ]; then
-        SELECTED_ENGINE="podman"
-        log_info "Installing Podman..."
-        if ! command -v podman &> /dev/null; then
-            if command -v apt-get &> /dev/null; then
-                sudo apt-get install -y podman podman-docker || true
-            elif command -v yum &> /dev/null; then
-                sudo yum install -y podman podman-docker || true
-            fi
-        fi
-        if command -v podman &> /dev/null; then
-            log_success "Podman installed successfully!"
-            if ! [ -S /run/podman/podman.sock ]; then
-                log_info "Starting Podman API socket..."
-                sudo mkdir -p /run/podman
-                nohup sudo podman system service --time=0 unix:///run/podman/podman.sock &> /dev/null &
-            fi
-        else
-            log_error "Podman installation failed."
+    # Docker Setup
+    log_info "Installing Docker..."
+    if ! command -v docker &> /dev/null; then
+        curl -fsSL https://get.docker.com | sh || true
+        if command -v systemctl &> /dev/null; then
+            sudo systemctl enable --now docker || true
         fi
     else
-        log_info "Installing Docker..."
-        if ! command -v docker &> /dev/null; then
-            curl -fsSL https://get.docker.com | sh || true
-            if command -v systemctl &> /dev/null; then
-                sudo systemctl enable --now docker || true
-            fi
-        else
-            log_success "Docker is already installed."
+        log_success "Docker is already installed."
+    fi
+
         fi
     fi
 
@@ -157,12 +131,7 @@ install_panel() {
         fi
     fi
     
-    # Save or update CONTAINER_ENGINE in .env
-    if grep -q "CONTAINER_ENGINE=" .env 2>/dev/null; then
-        sed -i "s/CONTAINER_ENGINE=.*/CONTAINER_ENGINE=$SELECTED_ENGINE/" .env
-    else
-        echo "CONTAINER_ENGINE=$SELECTED_ENGINE" >> .env
-    fi
+
     
     # Ensure ecosystem.config.cjs exists for PM2
     if [ ! -f "ecosystem.config.cjs" ]; then
