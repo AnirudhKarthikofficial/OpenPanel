@@ -62,11 +62,11 @@ check_root() {
 install_dependencies() {
     log_info "Updating system package lists..."
     if command -v apt-get &> /dev/null; then
-        sudo apt-get update -y
-        sudo apt-get install -y curl wget git build-essential ca-certificates gnupg lsb-release
+        sudo apt-get update -y || true
+        sudo apt-get install -y curl wget git build-essential ca-certificates gnupg lsb-release || log_warning "Some packages failed to install. Continuing..."
     elif command -v yum &> /dev/null; then
-        sudo yum update -y
-        sudo yum install -y curl wget git make gcc-c++ ca-certificates
+        sudo yum update -y || true
+        sudo yum install -y curl wget git make gcc-c++ ca-certificates || log_warning "Some packages failed to install. Continuing..."
     else
         log_warning "Package manager not explicitly handled. Assuming core utilities exist."
     fi
