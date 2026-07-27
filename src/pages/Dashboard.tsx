@@ -403,6 +403,7 @@ interface EmptyStateProps {
   hasFilters: boolean;
   isAdmin: boolean;
   reduceMotion: boolean;
+  key?: string;
 }
 
 const EmptyState = ({ hasFilters, isAdmin, reduceMotion }: EmptyStateProps) => (

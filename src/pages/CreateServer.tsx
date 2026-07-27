@@ -43,6 +43,8 @@ export default function CreateServer() {
   const [type, setType] = useState<string>("PAPER");
   const [version, setVersion] = useState("1.21.1");
   const [owner, setOwner] = useState("");
+  const [nodeId, setNodeId] = useState("local");
+  const [nodes, setNodes] = useState<any[]>([]);
   const [versions, setVersions] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,6 +87,10 @@ export default function CreateServer() {
       })
       .catch(() => {});
 
+    if (user?.role === "admin" || user?.role === "owner") {
+      axios.get("/api/nodes").then((res) => setNodes(res.data)).catch(() => {});
+    }
+
     axios
       .get("/api/auth/users")
       .then((res) => {
@@ -96,6 +102,7 @@ export default function CreateServer() {
         }
       })
       .catch(() => {});
+
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -135,6 +142,7 @@ export default function CreateServer() {
         version,
       };
       if (owner) payload.owner = owner;
+      if (nodeId) payload.nodeId = nodeId;
 
       await axios.post("/api/servers", payload);
       clearInterval(interval);
@@ -296,6 +304,22 @@ export default function CreateServer() {
             />
             <p className="text-xs text-muted-foreground mt-2">Select which user owns and has access to this server.</p>
           </div>
+
+          {(user?.role === "admin" || user?.role === "owner") && (
+            <div className="md:col-span-2 relative z-20 mt-4">
+              <label className="block text-sm font-medium text-foreground-muted mb-2 flex items-center">
+                <Globe className="w-4 h-4 mr-2 text-indigo-400" /> Deployment Node
+              </label>
+              <SearchableDropdown
+                value={nodeId}
+                onChange={setNodeId}
+                options={nodes.map(n => ({ value: n.id, label: n.name + " (" + n.ip + ")" }))}
+                placeholder="Select a node..."
+                searchPlaceholder="Search nodes..."
+              />
+              <p className="text-xs text-muted-foreground mt-2">Select which physical node this server container will be deployed to.</p>
+            </div>
+          )}
 
           <div className="md:col-span-2 relative z-10">
             <label className="block text-sm font-medium text-foreground-muted mb-3 flex items-center">

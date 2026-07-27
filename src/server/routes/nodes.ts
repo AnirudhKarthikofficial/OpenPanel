@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import path from "path";
 import crypto from "crypto";
 import { readJSON, writeJSON } from "../services/db.js";
+import { requireAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 const NODES_FILE = "nodes.json";
@@ -27,6 +28,8 @@ const initNodes = async () => {
   }
 };
 initNodes();
+
+router.use(requireAdmin);
 
 router.get("/", async (req, res) => {
   const nodes = await readJSON(NODES_FILE) || [];

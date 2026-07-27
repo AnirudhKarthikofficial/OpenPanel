@@ -19,7 +19,21 @@ export const isSandbox = !fs.existsSync('/var/run/docker.sock') &&
   !(process.env.DOCKER_SOCKET_PATH && fs.existsSync(process.env.DOCKER_SOCKET_PATH)) &&
   process.platform !== 'win32';
 
-export const docker = new Docker({ socketPath: getSocketPath() });
+export const defaultDocker = new Docker({ socketPath: getSocketPath() });
+
+export const getDocker = async (nodeId?: string) => {
+  if (!nodeId || nodeId === "local") return defaultDocker;
+  const nodes = await readJSON("nodes.json") || [];
+  const node = nodes.find((n: any) => n.id === nodeId);
+  if (node) {
+    return new Docker({
+      host: node.ip,
+      port: node.port,
+      headers: { Authorization: "Bearer " + node.key }
+    });
+  }
+  return defaultDocker;
+};
 
 // Mock state for sandbox demo
 const mockState: Record<string, boolean> = {};
@@ -43,7 +57,8 @@ export const getVersions = async (type: string = "PAPER") => {
   ];
 };
 
-export const createServerContainer = async (serverData: any) => {
+export const createServerContainer = async (serverData: any, nodeId?: string) => {
+  const docker = await getDocker(nodeId || serverData.nodeId);
   if (isSandbox) {
     mockState[serverData.id] = false;
     return "mock-container-id-" + serverData.id;
@@ -182,7 +197,8 @@ export const createServerContainer = async (serverData: any) => {
   return container.id;
 };
 
-export const startContainer = async (containerId: string) => {
+export const startContainer = async (containerId: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");
     mockState[id] = true;
@@ -218,7 +234,8 @@ export const startContainer = async (containerId: string) => {
   await container.start();
 };
 
-export const stopContainer = async (containerId: string) => {
+export const stopContainer = async (containerId: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");
     mockState[id] = false;
@@ -229,7 +246,8 @@ export const stopContainer = async (containerId: string) => {
   await container.stop();
 };
 
-export const restartContainer = async (containerId: string) => {
+export const restartContainer = async (containerId: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");
     mockState[id] = true;
@@ -240,7 +258,8 @@ export const restartContainer = async (containerId: string) => {
   await container.restart();
 };
 
-export const deleteContainer = async (containerId: string) => {
+export const deleteContainer = async (containerId: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");
     delete mockState[id];
@@ -258,7 +277,8 @@ export const deleteContainer = async (containerId: string) => {
   }
 };
 
-export const getContainerStatus = async (containerId: string) => {
+export const getContainerStatus = async (containerId: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");
     const isRunning = mockState[id] || false;
@@ -273,7 +293,8 @@ export const getContainerStatus = async (containerId: string) => {
   }
 };
 
-export const getContainerStats = async (containerId: string) => {
+export const getContainerStats = async (containerId: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");
     if (!mockState[id]) return { cpu: 0, ram: 0, disk: 0 };
@@ -325,7 +346,8 @@ export const getContainerStats = async (containerId: string) => {
   }
 };
 
-export const getContainerLogs = async (containerId: string): Promise<string> => {
+export const getContainerLogs = async (containerId: string, nodeId?: string): Promise<string> => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) return "[System] Sandbox mode. No historical logs available.\r\n";
   try {
     const container = docker.getContainer(containerId);
@@ -341,7 +363,8 @@ export const getContainerLogs = async (containerId: string): Promise<string> => 
 
 const activeStreams: Record<string, NodeJS.ReadWriteStream> = {};
 
-export const attachContainerSocket = async (containerId: string, serverId: string) => {
+export const attachContainerSocket = async (containerId: string, serverId: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
   if (isSandbox) {
     return;
   }
@@ -362,7 +385,8 @@ export const attachContainerSocket = async (containerId: string, serverId: strin
   }
 };
 
-export const sendContainerCommand = async (containerId: string, command: string) => {
+export const sendContainerCommand = async (containerId: string, command: string, nodeId?: string) => {
+  const docker = await getDocker(nodeId);
 
   if (isSandbox) {
     const id = containerId.replace("mock-container-id-", "");

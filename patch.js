@@ -1,4 +1,6 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+const fs = require('fs');
+
+const content = `import React, { useState, useRef, useCallback, useEffect } from "react";
 import { m, AnimatePresence, useReducedMotion, useInView, animate, useMotionValue, useMotionValueEvent } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -6,7 +8,7 @@ export const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 export const EASE_SOFT = [0.22, 1, 0.36, 1] as const;
 export const SPRING_SNAPPY = { type: "spring", stiffness: 320, damping: 28, mass: 0.7 } as const;
 export const SPRING_SILK = { type: "spring", stiffness: 140, damping: 22, mass: 0.9 } as const;
-export const NOISE_URI = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E\")";
+export const NOISE_URI = "url(\\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E\\")";
 
 export interface Ripple { id: number; x: number; y: number; }
 export function useRipple() {
@@ -46,7 +48,7 @@ const MotionLink = m(Link) as any;
 export function PrimaryLinkButton({ to, children, className }: { to: string; children: React.ReactNode; className?: string; }) {
   const { ripples, spawn } = useRipple();
   return (
-    <div className={`group relative block w-full sm:w-auto ${className || ""}`}>
+    <div className={\`group relative block w-full sm:w-auto \${className || ""}\`}>
       <span aria-hidden className="pointer-events-none absolute -inset-1 rounded-xl bg-gradient-to-r from-indigo-500/50 via-sky-400/50 to-emerald-400/50 opacity-0 blur-lg transition-opacity duration-500 group-hover:opacity-100" />
       <MotionLink
         to={to}
@@ -69,7 +71,7 @@ export function PrimaryLinkButton({ to, children, className }: { to: string; chi
 export function PrimaryButton({ onClick, children, className }: { onClick: () => void; children: React.ReactNode; className?: string; }) {
   const { ripples, spawn } = useRipple();
   return (
-    <div className={`group relative block w-full sm:w-auto ${className || ""}`}>
+    <div className={\`group relative block w-full sm:w-auto \${className || ""}\`}>
       <span aria-hidden className="pointer-events-none absolute -inset-1 rounded-xl bg-gradient-to-r from-indigo-500/50 via-sky-400/50 to-emerald-400/50 opacity-0 blur-lg transition-opacity duration-500 group-hover:opacity-100" />
       <m.button
         onClick={onClick}
@@ -129,3 +131,6 @@ export function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?:
 
   return <span ref={ref} className="tabular-nums">{Math.round(display)}{suffix}</span>;
 }
+`;
+
+fs.writeFileSync('src/components/dashboard/Shared.tsx', content);

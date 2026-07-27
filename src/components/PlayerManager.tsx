@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Users, Shield, Gavel, UserMinus, ShieldAlert, Check } from "lucide-react";
+import { Users, Shield, Gavel, UserMinus, ShieldAlert, Check, RefreshCw } from "lucide-react";
 import axios from "axios";
 
 export default function PlayerManager({ serverId, players }: { serverId: string, players: {name: string}[] }) {
   const [loadingAction, setLoadingAction] = useState<{player: string, action: string} | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const handleAction = async (player: string, action: string, command: string) => {
     try {
@@ -16,14 +17,31 @@ export default function PlayerManager({ serverId, players }: { serverId: string,
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await axios.post(`/api/servers/${serverId}/command`, { command: "list" });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
   return (
     <div id="player-manager" className="relative h-full flex flex-col min-h-0">
-      <div className="px-4 pt-3.5 pb-1 shrink-0 relative z-10">
+      <div className="px-4 pt-3.5 pb-1 shrink-0 relative z-10 flex items-center justify-between">
         <h2 className="qx-display text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300">
           Players
         </h2>
+        <button 
+          onClick={handleRefresh} 
+          className="text-slate-500 hover:text-slate-300 transition-colors"
+          title="Refresh Player List"
+        >
+          <RefreshCw size={12} className={isRefreshing ? "animate-spin" : ""} />
+        </button>
       </div>
-
       <div className="relative z-10 overflow-y-auto flex-1 qx-scroll touch-auto overscroll-y-auto mt-2" style={{ WebkitOverflowScrolling: 'touch' }}>
         {players.length === 0 ? (
           <div className="p-6 text-center flex flex-col items-center justify-center h-full opacity-50">
@@ -42,7 +60,6 @@ export default function PlayerManager({ serverId, players }: { serverId: string,
                 />
                 <span className="qx-display font-semibold text-slate-200 text-base truncate">{player.name}</span>
               </div>
-
               <div className="grid grid-cols-4 gap-1.5 w-full mt-1">
                 <button 
                   onClick={() => handleAction(player.name, 'op', `op ${player.name}`)}

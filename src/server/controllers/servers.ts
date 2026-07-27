@@ -18,7 +18,7 @@ export const getServers = async (req: Request, res: Response) => {
   // Update statuses
   const updatedServers = await Promise.all(userServers.map(async (server: any) => {
     if (server.containerId) {
-      const status = await getContainerStatus(server.containerId);
+      const status = await getContainerStatus(server.containerId, server.nodeId);
       server.status = status?.State?.Running ? "online" : "offline";
     }
     return server;
@@ -40,7 +40,7 @@ export const getServer = async (req: Request, res: Response) => {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const status = await getContainerStatus(server.containerId);
+  const status = await getContainerStatus(server.containerId, server.nodeId);
   server.status = status?.State?.Running ? "online" : "offline";
   res.json(server);
 };
@@ -59,7 +59,7 @@ export const getServerStats = async (req: Request, res: Response) => {
   }
 
   if (server.containerId) {
-    const stats = await getContainerStats(server.containerId);
+    const stats = await getContainerStats(server.containerId, server.nodeId);
     res.json({
       ...stats,
       limitRam: server.ram ? server.ram * 1024 : 1024,
@@ -76,7 +76,7 @@ export const createServer = async (req: Request, res: Response) => {
   if (user.role !== "admin" && user.role !== "owner") {
     return res.status(403).json({ error: "Only admins can create servers" });
   }
-  const { name, ram, port, version, theme, cpu, disk, owner, ipAlias, type } = req.body;
+  const { name, ram, port, version, theme, cpu, disk, owner, ipAlias, type, nodeId } = req.body;
   if (!name || !ram || !port) {
     res.status(400).json({ error: "Missing required fields (name, ram, port)" });
     return;
@@ -92,6 +92,7 @@ export const createServer = async (req: Request, res: Response) => {
     disk: disk || 10,
     port,
     ipAlias: ipAlias || "",
+    nodeId: nodeId || "local",
     type: type || "PAPER",
     version: version || "1.21.1",
     theme: theme || "default",
@@ -182,7 +183,7 @@ export const deleteServer = async (req: Request, res: Response) => {
     }
 
     if (server.containerId) {
-      await deleteContainer(server.containerId);
+      await deleteContainer(server.containerId, server.nodeId);
     }
     
     servers = servers.filter((s: any) => s.id !== id);
@@ -222,18 +223,18 @@ export const startServer = async (req: Request, res: Response) => {
       const io = req.app.get("io");
       if (io) io.to(`server_${id}`).emit("clear_logs");
       
-      await startContainer(server.containerId);
+      await startContainer(server.containerId, server.nodeId);
     } catch (startErr: any) {
       if (startErr.statusCode === 404 || (startErr.message && startErr.message.toLowerCase().includes("no such container"))) {
         console.log(`Container missing for server ${server.id}. Recreating...`);
         server.containerId = await createServerContainer(server);
         await writeJSON("servers.json", servers);
-        await startContainer(server.containerId);
+        await startContainer(server.containerId, server.nodeId);
       } else {
         throw startErr;
       }
     }
-    await attachContainerSocket(server.containerId, server.id);
+    await attachContainerSocket(server.containerId, server.id, server.nodeId);
     res.json({ success: true });
   } catch (err: any) {
     console.error("Start server error:", err);
@@ -250,7 +251,7 @@ export const stopServer = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Not found" });
     }
     try {
-      await stopContainer(server.containerId);
+      await stopContainer(server.containerId, server.nodeId);
     } catch (stopErr: any) {
       if (stopErr.statusCode === 404 || (stopErr.message && stopErr.message.toLowerCase().includes("no such container"))) {
         console.log(`Container already missing for server ${server.id}. Assuming stopped.`);
@@ -277,18 +278,18 @@ export const restartServer = async (req: Request, res: Response) => {
       const io = req.app.get("io");
       if (io) io.to(`server_${id}`).emit("clear_logs");
 
-      await restartContainer(server.containerId);
+      await restartContainer(server.containerId, server.nodeId);
     } catch (startErr: any) {
       if (startErr.statusCode === 404 || (startErr.message && startErr.message.toLowerCase().includes("no such container"))) {
         console.log(`Container missing for server ${server.id}. Recreating...`);
         server.containerId = await createServerContainer(server);
         await writeJSON("servers.json", servers);
-        await startContainer(server.containerId);
+        await startContainer(server.containerId, server.nodeId);
       } else {
         throw startErr;
       }
     }
-    await attachContainerSocket(server.containerId, server.id);
+    await attachContainerSocket(server.containerId, server.id, server.nodeId);
     res.json({ success: true });
   } catch (err: any) {
     console.error("Restart server error:", err);
@@ -306,7 +307,7 @@ export const sendCommand = async (req: Request, res: Response) => {
     if (!server || !server.containerId) {
       return res.status(404).json({ error: "Not found" });
     }
-    await sendContainerCommand(server.containerId, command);
+    await sendContainerCommand(server.containerId, command, server.nodeId);
     res.json({ success: true });
   } catch (err: any) {
     console.error("Command error:", err);
@@ -334,12 +335,12 @@ export const changeServerVersion = async (req: Request, res: Response) => {
     }
 
     if (server.containerId) {
-      const status = await getContainerStatus(server.containerId);
+      const status = await getContainerStatus(server.containerId, server.nodeId);
       if (status?.State?.Running) {
         return res.status(400).json({ error: "Server must be stopped before changing version. Please stop the server first." });
       }
       // Delete old container
-      await deleteContainer(server.containerId);
+      await deleteContainer(server.containerId, server.nodeId);
     }
     
     // Automatically delete config files to avoid issues when switching versions/types
@@ -875,7 +876,7 @@ export const updateResources = async (req: Request, res: Response) => {
     // Stop container if running
     if (server.containerId) {
        try {
-         await stopContainer(server.containerId);
+         await stopContainer(server.containerId, server.nodeId);
        } catch(e) {}
     }
 
@@ -900,7 +901,7 @@ export const updateSuspend = async (req: Request, res: Response) => {
 
     if (server.suspended && server.containerId) {
        try {
-         await stopContainer(server.containerId);
+         await stopContainer(server.containerId, server.nodeId);
        } catch(e) {}
     }
 

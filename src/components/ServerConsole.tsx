@@ -49,7 +49,6 @@ type LogFilter = "all" | LogLevel;
 
 const MAX_LOG_LINES = 200;
 const STATS_POLL_MS = 5000;
-const LIST_DELAY_MS = 2000;
 const SPARK_CAP = 40;
 const ANSI_RE = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
 
@@ -537,15 +536,6 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
       sockRef.current = null;
     };
   }, [serverId, token]);
-
-  /* ── Initial player list ── */
-  useEffect(() => {
-    if (!serverId) return;
-    const t = setTimeout(() => {
-      axios.post(`/api/servers/${serverId}/command`, { command: "list" }).catch(() => {});
-    }, LIST_DELAY_MS);
-    return () => clearTimeout(t);
-  }, [serverId]);
 
   /* ── Stats polling + history ── */
   useEffect(() => {

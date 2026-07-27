@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Server as ServerIcon, Plus, Trash2, Key, Terminal, Globe, ServerCog } from "lucide-react";
+import { Server as ServerIcon, Plus, Trash2, Key, Terminal, Globe, ServerCog, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 export default function Nodes() {
   const { user } = useAuth();
@@ -12,12 +13,8 @@ export default function Nodes() {
 
   const fetchNodes = async () => {
     try {
-      const res = await fetch("/api/nodes", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      if (res.ok) {
-        setNodes(await res.json());
-      }
+      const res = await axios.get("/api/nodes");
+      setNodes(res.data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -32,19 +29,10 @@ export default function Nodes() {
   const handleAddNode = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/nodes", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(formData)
-      });
-      if (res.ok) {
-        setIsAddModalOpen(false);
-        setFormData({ name: "", ip: "", port: "6768", key: "" });
-        fetchNodes();
-      }
+      await axios.post("/api/nodes", formData);
+      setIsAddModalOpen(false);
+      setFormData({ name: "", ip: "", port: "6768", key: "" });
+      fetchNodes();
     } catch (e) {
       console.error(e);
     }
@@ -53,10 +41,7 @@ export default function Nodes() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to remove this node? Server containers on this node will no longer be accessible from the panel.")) return;
     try {
-      await fetch(`/api/nodes/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      await axios.delete(`/api/nodes/${id}`);
       fetchNodes();
     } catch (e) {
       console.error(e);
