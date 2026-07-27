@@ -91,6 +91,7 @@ export default function SettingsPage(): React.ReactElement {
   const [croppingType, setCroppingType] = useState<"logo" | "background" | null>(null);
   const [bgAspectRatio, setBgAspectRatio] = useState<number>(16/9);
   const [tempBgBlur, setTempBgBlur] = useState<number>(10);
+  const [customBgUrlInput, setCustomBgUrlInput] = useState<string>("");
   const bgFileInputRef = useRef<HTMLInputElement>(null);
   const [oldPassword, setOldPassword] = useState("");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -130,7 +131,8 @@ export default function SettingsPage(): React.ReactElement {
     setFbStorageBucket(firebaseStorageBucket || "");
     setFbMessagingSenderId(firebaseMessagingSenderId || "");
     setFbAppId(firebaseAppId || "");
-  }, [panelName, enablePlayit, enableTutorial, enableLoginAnimation, enableRegistration, theme, enableGoogleLogin, firebaseApiKey, firebaseAuthDomain, firebaseProjectId, firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId]);
+    setCustomBgUrlInput(panelBackgroundImage || "");
+  }, [panelName, panelBackgroundImage, enablePlayit, enableTutorial, enableLoginAnimation, enableRegistration, theme, enableGoogleLogin, firebaseApiKey, firebaseAuthDomain, firebaseProjectId, firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId]);
 
   const handleSaveFirebaseSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -784,38 +786,45 @@ export default function SettingsPage(): React.ReactElement {
       )}
 
       {renderGoogleFirebase()}
-      
-      {renderGoogleFirebase()}
       {user.role === "admin" && (
-        <div className="bg-muted backdrop-blur-xl border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
-          <h2 className="text-xl font-bold mb-8 flex items-center text-foreground relative z-10">
-            <Layout className="mr-3 text-indigo-400 w-5 h-5" /> Background Configuration
+        <div className="bg-card/80 backdrop-blur-xl border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
+          <h2 className="text-xl font-bold mb-6 flex items-center text-foreground relative z-10">
+            <Layout className="mr-3 text-indigo-400 w-5 h-5" /> Custom Dashboard Background
           </h2>
-          <div className="max-w-2xl relative z-10">
-            <div className="flex flex-col sm:flex-row gap-8">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-muted-foreground mb-4">Background Image</label>
-                <div className="w-full h-48 rounded-xl bg-muted border border-border flex items-center justify-center overflow-hidden relative group mb-4">
+          <div className="max-w-4xl relative z-10 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Column: Preview & Upload Controls */}
+              <div className="space-y-4">
+                <label className="block text-sm font-semibold text-foreground">Background Preview</label>
+                <div className="w-full h-48 rounded-xl bg-slate-900 border border-border flex items-center justify-center overflow-hidden relative group">
                   {panelBackgroundImage ? (
-                    <img src={panelBackgroundImage} alt="Panel Background" className="w-full h-full object-cover" />
+                    <img src={panelBackgroundImage} alt="Dashboard Background" className="w-full h-full object-cover" />
                   ) : (
-                    <Layout className="w-12 h-12 text-muted-foreground" />
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground p-4 text-center">
+                      <Layout className="w-10 h-10 opacity-60" />
+                      <span className="text-xs">Default Animated Gradient Active</span>
+                    </div>
                   )}
                   {panelBackgroundImage && (
                     <button 
                       onClick={async () => {
+                        setIsProcessing(true);
                         try {
                           await axios.put("/api/system/settings", { panelBackgroundImage: "" });
-                          fetchSettings();
-                        } catch(e) {}
+                          setCustomBgUrlInput("");
+                          await fetchSettings();
+                        } catch(e) {} finally {
+                          setIsProcessing(false);
+                        }
                       }}
-                      className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-2 text-white font-medium"
                     >
-                      <Trash2 size={24} className="text-foreground" />
+                      <Trash2 size={20} /> Remove Background
                     </button>
                   )}
                 </div>
-                
+
+                {/* Upload Button */}
                 <input 
                   type="file" 
                   accept="image/*" 
@@ -823,61 +832,126 @@ export default function SettingsPage(): React.ReactElement {
                   ref={bgFileInputRef}
                   onChange={(e: any) => handleFileChange(e, "background")}
                 />
-                <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
                   <button 
                     onClick={() => bgFileInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 font-semibold px-4 py-3 rounded-xl transition-all shadow-sm active:scale-[0.98]"
+                    className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-[0.98] text-sm"
                   >
-                    <Upload size={18} /> Upload Background Image
+                    <Upload size={16} /> Upload Image File
                   </button>
                   <button 
                     onClick={async () => {
                       setIsProcessing(true);
                       try {
                         await axios.put("/api/system/settings", { panelBackgroundImage: "" });
+                        setCustomBgUrlInput("");
                         await fetchSettings();
                       } catch(e) {} finally {
                         setIsProcessing(false);
                       }
                     }}
-                    className="w-full flex items-center justify-center gap-2 bg-muted hover:bg-muted-hover text-foreground-muted border border-border font-semibold px-4 py-3 rounded-xl transition-all shadow-sm active:scale-[0.98]"
+                    className="flex items-center justify-center gap-2 bg-muted hover:bg-muted-hover text-foreground border border-border font-medium px-4 py-2.5 rounded-xl transition-all shadow-sm text-sm"
                   >
-                    <Layout size={18} /> Default Theme
+                    Reset
                   </button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 text-center">Will be automatically scaled and cropped to fit 16:9 on desktop and 9:16 on mobile.</p>
 
+                {/* Custom URL Input */}
+                <div className="space-y-2 pt-2">
+                  <label className="block text-xs font-medium text-muted-foreground">Or Enter Custom Image URL</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="url"
+                      placeholder="https://example.com/wallpaper.jpg"
+                      value={customBgUrlInput}
+                      onChange={(e) => setCustomBgUrlInput(e.target.value)}
+                      className="flex-1 text-sm bg-background border border-border rounded-xl px-3 py-2 text-foreground focus:outline-none focus:border-indigo-500"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!customBgUrlInput.trim()) return;
+                        setIsProcessing(true);
+                        try {
+                          await axios.put("/api/system/settings", { panelBackgroundImage: customBgUrlInput.trim() });
+                          await fetchSettings();
+                        } catch(e) {} finally {
+                          setIsProcessing(false);
+                        }
+                      }}
+                      className="bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-medium px-4 py-2 rounded-xl text-sm border border-indigo-500/30 transition-all"
+                    >
+                      Apply URL
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex-1 flex flex-col justify-center">
-                <label className="block text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2 drop-shadow-sm">Background Blur: {tempBgBlur}px</label>
-                <p className="text-xs text-muted-foreground mb-6">Adjust the blur to make the text and UI elements more readable.</p>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="50" 
-                  value={tempBgBlur}
-                  onChange={(e: any) => setTempBgBlur(Number(e.target.value))}
-                  onMouseUp={async () => {
-                    setIsProcessing(true);
-                    try {
-                      await axios.put("/api/system/settings", { panelBackgroundBlur: tempBgBlur });
-                      await fetchSettings();
-                    } catch(e) {} finally {
-                      setIsProcessing(false);
-                    }
-                  }}
-                  onTouchEnd={async () => {
-                    setIsProcessing(true);
-                    try {
-                      await axios.put("/api/system/settings", { panelBackgroundBlur: tempBgBlur });
-                      await fetchSettings();
-                    } catch(e) {} finally {
-                      setIsProcessing(false);
-                    }
-                  }}
-                  className="w-full accent-indigo-500"
-                />
+              {/* Right Column: Blur Slider & Presets */}
+              <div className="space-y-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-indigo-300 uppercase tracking-widest">Background Blur ({tempBgBlur}px)</label>
+                    <span className="text-xs text-muted-foreground">{tempBgBlur === 0 ? "Sharp" : tempBgBlur > 20 ? "Heavy Blur" : "Soft Blur"}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">Adjust background blur for crisp dashboard readability.</p>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="50" 
+                    value={tempBgBlur}
+                    onChange={(e: any) => setTempBgBlur(Number(e.target.value))}
+                    onMouseUp={async () => {
+                      setIsProcessing(true);
+                      try {
+                        await axios.put("/api/system/settings", { panelBackgroundBlur: tempBgBlur });
+                        await fetchSettings();
+                      } catch(e) {} finally {
+                        setIsProcessing(false);
+                      }
+                    }}
+                    onTouchEnd={async () => {
+                      setIsProcessing(true);
+                      try {
+                        await axios.put("/api/system/settings", { panelBackgroundBlur: tempBgBlur });
+                        await fetchSettings();
+                      } catch(e) {} finally {
+                        setIsProcessing(false);
+                      }
+                    }}
+                    className="w-full accent-indigo-500"
+                  />
+                </div>
+
+                {/* Preset Themes */}
+                <div className="space-y-3 pt-2 border-t border-border-subtle">
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest">Quick Wallpaper Presets</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { name: "Deep Space", url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1600&auto=format&fit=crop" },
+                      { name: "Cyberpunk City", url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop" },
+                      { name: "Dark Abstract", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1600&auto=format&fit=crop" },
+                      { name: "Neon Horizon", url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1600&auto=format&fit=crop" },
+                    ].map((preset) => (
+                      <button
+                        key={preset.name}
+                        onClick={async () => {
+                          setIsProcessing(true);
+                          setCustomBgUrlInput(preset.url);
+                          try {
+                            await axios.put("/api/system/settings", { panelBackgroundImage: preset.url });
+                            await fetchSettings();
+                          } catch(e) {} finally {
+                            setIsProcessing(false);
+                          }
+                        }}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-background border border-border hover:border-indigo-500/50 hover:bg-muted/50 transition-all text-left group"
+                      >
+                        <img src={preset.url} alt={preset.name} className="w-8 h-8 rounded-lg object-cover group-hover:scale-105 transition-transform" />
+                        <span className="text-xs font-medium text-foreground group-hover:text-indigo-400">{preset.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

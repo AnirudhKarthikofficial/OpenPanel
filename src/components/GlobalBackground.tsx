@@ -8,14 +8,15 @@ export function GlobalBackground() {
 
   return (
     <div 
-      className="fixed inset-0 z-[-1] bg-cover bg-center bg-no-repeat"
+      className="fixed inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat transition-all duration-500"
       style={{ 
-        backgroundImage: `url(${panelBackgroundImage})`,
+        backgroundImage: `url("${panelBackgroundImage}")`,
         filter: `blur(${panelBackgroundBlur || 0}px)`,
-        transform: 'scale(1.1)', // To prevent blurred edges from showing the background behind it
+        transform: 'scale(1.08)', // To prevent blurred edges from showing
       }}
     >
-      <div className="absolute inset-0 bg-background/40" /> {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-slate-950/40 backdrop-brightness-75" /> {/* Dark overlay for readability */}
     </div>
   );
 }
+

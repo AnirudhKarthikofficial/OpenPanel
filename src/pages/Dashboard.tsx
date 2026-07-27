@@ -10,6 +10,7 @@ import {
 } from "framer-motion";
 
 import { useAuth } from "../context/AuthContext";
+import { useSettings } from "../context/SettingsContext";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { PrimaryButton, PrimaryLinkButton } from "../components/dashboard/Shared";
 import { ResourcesSlider } from "../components/dashboard/ResourcesSlider";
@@ -33,6 +34,7 @@ const AnimatedBackground = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
+  const { panelBackgroundImage } = useSettings();
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -61,11 +63,15 @@ const AnimatedBackground = () => {
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 -z-10 overflow-hidden"
+      className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
       aria-hidden="true"
     >
-      {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+      {/* Base gradient - only shown if no custom background image set */}
+      {!panelBackgroundImage ? (
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+      ) : (
+        <div className="absolute inset-0 bg-slate-950/20" />
+      )}
 
       {/* Animated gradient orbs */}
       <div className="absolute inset-0 overflow-hidden">
