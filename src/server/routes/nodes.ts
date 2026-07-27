@@ -44,7 +44,8 @@ router.get("/", async (req, res) => {
       const docker = await getDocker(node.id);
       await docker.ping();
       node.status = "online";
-    } catch (e) {
+    } catch (e: any) {
+      console.error(`Ping failed for node ${node.id}:`, e.message || e);
       node.status = "offline";
     }
     return node;

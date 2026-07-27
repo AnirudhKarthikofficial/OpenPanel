@@ -31,8 +31,15 @@ export default function Nodes() {
 
   const handleAddNode = async (e: React.FormEvent) => {
     e.preventDefault();
+    let { name, ip, port, key } = formData;
+    
+    // Auto-detect domain and format as https if no protocol is given
+    if (ip && !ip.startsWith("http://") && !ip.startsWith("https://") && ip.match(/[a-zA-Z]/) && !ip.match(/^[0-9.]+$/)) {
+       ip = "https://" + ip;
+    }
+
     try {
-      await axios.post("/api/nodes", formData);
+      await axios.post("/api/nodes", { name, ip, port, key });
       setIsAddModalOpen(false);
       setFormData({ name: "", ip: "", port: "67678", key: "" });
       fetchNodes();
