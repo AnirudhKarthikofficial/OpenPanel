@@ -11,6 +11,7 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
   
   const links = [
     { name: "Overview", path: "/", icon: <LayoutDashboard size={20} /> },
+    { name: "Nodes", path: "/nodes", icon: <Activity size={20} /> },
     { name: "Servers", path: "/servers", icon: <Server size={20} /> },
   ];
   
