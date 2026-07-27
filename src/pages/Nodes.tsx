@@ -242,6 +242,7 @@ export default function Nodes() {
                     className="w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     placeholder="192.168.1.100 or https://tunnel.yourdomain.com"
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground">For Cloudflare Tunnels, include <strong>https://</strong> in the URL, and leave Port blank (or 443).</p>
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-muted-foreground">Port (Optional)</label>

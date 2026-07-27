@@ -29,6 +29,11 @@ export const getDocker = async (nodeId?: string) => {
     let host = node.ip;
     let protocol: "http" | "https" | "ssh" = "http";
     let port = node.port;
+
+    if (!host.startsWith("http://") && !host.startsWith("https://") && port === 443) {
+      protocol = "https";
+    }
+
     if (host.startsWith("http://") || host.startsWith("https://")) {
       try {
         const url = new URL(host);
