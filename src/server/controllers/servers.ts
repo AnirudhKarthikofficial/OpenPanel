@@ -504,6 +504,70 @@ export const renameFile = async (req: Request, res: Response) => {
   }
 }
 
+export const downloadFile = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  let rawPaths: string[] = [];
+  if (req.query.paths) {
+    rawPaths = Array.isArray(req.query.paths) ? (req.query.paths as string[]) : String(req.query.paths).split(",");
+  } else if (req.query.path) {
+    rawPaths = [String(req.query.path)];
+  }
+
+  if (rawPaths.length === 0) {
+    return res.status(400).json({ error: "No path specified" });
+  }
+
+  const serverBaseDir = path.join(process.cwd(), ".data", "servers", id);
+
+  try {
+    if (rawPaths.length === 1) {
+      const singlePath = rawPaths[0];
+      const targetPath = path.join(serverBaseDir, singlePath);
+
+      if (!targetPath.startsWith(serverBaseDir)) {
+        return res.status(403).json({ error: "Invalid path" });
+      }
+
+      const stat = await fs.stat(targetPath);
+      if (!stat.isDirectory()) {
+        return res.download(targetPath, path.basename(targetPath));
+      }
+    }
+
+    // Multiple items OR a single directory -> stream as ZIP
+    const zipName = rawPaths.length === 1 
+      ? `${path.basename(rawPaths[0]) || "folder"}.zip`
+      : `download-${Date.now()}.zip`;
+
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="${zipName}"`);
+
+    const archive = new ZipArchive({ zlib: { level: 9 } });
+    archive.on("error", (err: any) => {
+      if (!res.headersSent) res.status(500).json({ error: err.message });
+    });
+    archive.pipe(res);
+
+    for (const relPath of rawPaths) {
+      const targetPath = path.join(serverBaseDir, relPath);
+      if (!targetPath.startsWith(serverBaseDir)) continue;
+      const itemName = path.basename(targetPath);
+      const stat = await fs.stat(targetPath).catch(() => null);
+      if (!stat) continue;
+
+      if (stat.isDirectory()) {
+        archive.directory(targetPath, itemName);
+      } else {
+        archive.file(targetPath, { name: itemName });
+      }
+    }
+
+    await archive.finalize();
+  } catch (e: any) {
+    if (!res.headersSent) res.status(500).json({ error: e.message });
+  }
+};
+
 export const unzipFile = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { path: filePath } = req.body;
@@ -703,6 +767,35 @@ export const installPlugin = async (req: Request, res: Response) => {
     let filename = `${pluginName.replace(/[^a-zA-Z0-9]/g, '_')}.jar`;
     const axios = (await import("axios")).default;
 
+    const resolveGithubRelease = async (extUrl: string) => {
+      if (extUrl.includes('github.com') && extUrl.includes('/releases/')) {
+        let apiUrl = null;
+        const match = extUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\/releases\/tag\/([^\/]+)/);
+        if (match) {
+          apiUrl = `https://api.github.com/repos/${match[1]}/${match[2]}/releases/tags/${match[3]}`;
+        } else {
+          const matchLatest = extUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\/releases\/latest/);
+          if (matchLatest) {
+            apiUrl = `https://api.github.com/repos/${matchLatest[1]}/${matchLatest[2]}/releases/latest`;
+          }
+        }
+        if (apiUrl) {
+          try {
+            const ghRes = await axios.get(apiUrl);
+            if (ghRes.data && ghRes.data.assets) {
+              const jarAsset = ghRes.data.assets.find((a: any) => a.name.endsWith('.jar'));
+              if (jarAsset) {
+                return { url: jarAsset.browser_download_url, filename: jarAsset.name };
+              }
+            }
+          } catch(e) {
+            console.error('GitHub API error:', e);
+          }
+        }
+      }
+      return null;
+    };
+
     if (source === 'modrinth') {
       const verRes = await axios.get(`https://api.modrinth.com/v2/project/${pluginId}/version`);
       if (verRes.data && verRes.data.length > 0) {
@@ -717,38 +810,11 @@ export const installPlugin = async (req: Request, res: Response) => {
        if (apiRes.data && apiRes.data.file) {
          if (apiRes.data.file.type === 'external' && apiRes.data.file.externalUrl) {
            const extUrl = apiRes.data.file.externalUrl;
-           if (extUrl.includes('github.com') && extUrl.includes('/releases/')) {
-             // Try to extract github repo to get the jar
-             const match = extUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\/releases\/tag\/([^\/]+)/);
-             if (match) {
-               const owner = match[1];
-               const repo = match[2];
-               const tag = match[3];
-               const ghRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/tags/${tag}`);
-               if (ghRes.data && ghRes.data.assets) {
-                 const jarAsset = ghRes.data.assets.find((a: any) => a.name.endsWith('.jar'));
-                 if (jarAsset) {
-                   downloadUrl = jarAsset.browser_download_url;
-                   filename = jarAsset.name;
-                 }
-               }
-             } else {
-               const matchLatest = extUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\/releases\/latest/);
-               if (matchLatest) {
-                 const owner = matchLatest[1];
-                 const repo = matchLatest[2];
-                 const ghRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
-                 if (ghRes.data && ghRes.data.assets) {
-                   const jarAsset = ghRes.data.assets.find((a: any) => a.name.endsWith('.jar'));
-                   if (jarAsset) {
-                     downloadUrl = jarAsset.browser_download_url;
-                     filename = jarAsset.name;
-                   }
-                 }
-               }
-             }
+           const ghAsset = await resolveGithubRelease(extUrl);
+           if (ghAsset) {
+             downloadUrl = ghAsset.url;
+             filename = ghAsset.filename;
            }
-           
            if (!downloadUrl) {
              return res.status(400).json({ error: "This plugin must be downloaded externally from: " + extUrl });
            }
@@ -770,7 +836,14 @@ export const installPlugin = async (req: Request, res: Response) => {
                 filename = (download as any).fileInfo.name;
             }
          } else if (download && (download as any).externalUrl) {
-            return res.status(400).json({ error: "This plugin must be downloaded externally from: " + (download as any).externalUrl });
+            const extUrl = (download as any).externalUrl;
+            const ghAsset = await resolveGithubRelease(extUrl);
+            if (ghAsset) {
+              downloadUrl = ghAsset.url;
+              filename = ghAsset.filename;
+            } else {
+              return res.status(400).json({ error: "This plugin must be downloaded externally from: " + extUrl });
+            }
          }
        }
     }
