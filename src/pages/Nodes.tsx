@@ -73,9 +73,14 @@ export default function Nodes() {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Infrastructure Nodes</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-foreground">Infrastructure Nodes</h1>
+            <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-xs font-bold uppercase text-amber-500">
+              BETA
+            </span>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage your connected VPS nodes and server resources.
+            Manage your connected VPS nodes and server resources (External node connections are currently in Beta).
           </p>
         </div>
         <div className="flex gap-3">
@@ -101,6 +106,13 @@ export default function Nodes() {
             <Plus className="h-4 w-4" />
             Connect Node
           </button>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-amber-200 text-sm flex items-start gap-3">
+        <span className="text-lg">🧪</span>
+        <div>
+          <strong className="font-semibold text-amber-400">Beta Testing Notice:</strong> Multi-node cluster feature & external VPS node setup (direct IP or Cloudflare Tunnels) are currently in <strong>Beta Testing</strong>. For the best stability, use the <strong>Local Node</strong> (built-in).
         </div>
       </div>
 
