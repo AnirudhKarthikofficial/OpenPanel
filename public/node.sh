@@ -1,7 +1,18 @@
 #!/bin/bash
-
 # Node Installer Script for JTG Panel
 # This script sets up a remote node for the panel
+
+PORT=6768
+CF_TOKEN=""
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -p|--port) PORT="$2"; shift ;;
+        -c|--cf-token) CF_TOKEN="$2"; shift ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 
 echo "======================================"
 echo "    JTG Panel Node Setup Script       "
@@ -77,12 +88,13 @@ app.use((req, res, next) => {
 
 // Proxy to local Docker daemon
 const socketPath = process.platform === 'win32' ? '//./pipe/docker_engine' : '/var/run/docker.sock';
+
 app.use('/', createProxyMiddleware({
   target: { socketPath },
   changeOrigin: true
 }));
 
-const PORT = 6768;
+const PORT = process.env.PORT || 6768;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Node Agent listening on port ${PORT}`);
 });
@@ -93,7 +105,9 @@ npm install
 
 # Generate a random 32-character key
 NODE_KEY=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
+
 echo "NODE_KEY=$NODE_KEY" > .env
+echo "PORT=$PORT" >> .env
 
 echo "[+] Starting Node Agent..."
 pm2 start agent.js --name jtg-node
@@ -104,13 +118,25 @@ chmod +x pm2-startup.sh
 
 IP_ADDR=$(curl -s ifconfig.me || echo "YOUR_VPS_IP")
 
+if [ -n "$CF_TOKEN" ]; then
+    echo "[+] Cloudflare Tunnel token provided. Installing cloudflared..."
+    curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+    dpkg -i cloudflared.deb
+    rm cloudflared.deb
+    echo "[+] Starting Cloudflare Tunnel service..."
+    cloudflared service install $CF_TOKEN
+fi
+
 echo "======================================"
 echo "    Node Setup Complete!              "
 echo "======================================"
 echo "Use the following details in your Panel to connect this node:"
 echo ""
 echo "  IP Address : $IP_ADDR"
-echo "  Port       : 6768"
+if [ -n "$CF_TOKEN" ]; then
+echo "  Cloudflare : Yes (HTTP Domain mapped in your Zero Trust dashboard)"
+fi
+echo "  Port       : $PORT"
 echo "  Node Key   : $NODE_KEY"
 echo ""
 echo "======================================"

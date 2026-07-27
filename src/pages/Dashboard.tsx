@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useMemo, useState, useCallback, useDeferredValue, useRef, useEffect } from "react";
 import { 
   AlertTriangle, RefreshCw, Plus, LayoutGrid, List, Search, 

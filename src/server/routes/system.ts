@@ -22,8 +22,7 @@ router.get("/paper-versions", async (req, res) => {
 });
 
 router.get("/stats", (req, res) => {
-  const cpus = os.cpus();
-  const totalMemory = os.totalmem();
+    const totalMemory = os.totalmem();
   const freeMemory = os.freemem();
   
   res.json({

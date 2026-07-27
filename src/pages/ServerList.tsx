@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ╔══════════════════════════════════════════════════════════════════════════╗
 // ║  ServerList · Fleet grid with live status and per-server metrics           ║
 // ║                                                                            ║

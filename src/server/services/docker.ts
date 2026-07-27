@@ -26,9 +26,24 @@ export const getDocker = async (nodeId?: string) => {
   const nodes = await readJSON("nodes.json") || [];
   const node = nodes.find((n: any) => n.id === nodeId);
   if (node) {
+    let host = node.ip;
+    let protocol: "http" | "https" | "ssh" = "http";
+    let port = node.port;
+    if (host.startsWith("http://") || host.startsWith("https://")) {
+      try {
+        const url = new URL(host);
+        protocol = (url.protocol.replace(':', '') === 'https' ? 'https' : 'http');
+        host = url.hostname;
+        if (url.port) port = parseInt(url.port);
+        else port = protocol === "https" ? 443 : 80;
+      } catch (e) {
+        console.error("Invalid URL in node IP", host);
+      }
+    }
     return new Docker({
-      host: node.ip,
-      port: node.port,
+      protocol,
+      host,
+      port,
       headers: { Authorization: "Bearer " + node.key }
     });
   }
@@ -389,7 +404,6 @@ export const sendContainerCommand = async (containerId: string, command: string,
   const docker = await getDocker(nodeId);
 
   if (isSandbox) {
-    const id = containerId.replace("mock-container-id-", "");
     // Handled by client local echo
     return;
   }

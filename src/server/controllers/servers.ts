@@ -98,7 +98,7 @@ export const createServer = async (req: Request, res: Response) => {
     theme: theme || "default",
     status: "installing",
     createdAt: new Date().toISOString(),
-    containerId: null,
+    containerId: null as string | null,
   };
 
   const servers = await readJSON("servers.json") || [];
@@ -211,7 +211,7 @@ export const startServer = async (req: Request, res: Response) => {
     const { id } = req.params;
     const servers = await readJSON("servers.json") || [];
     
-    const server = servers.find((s) => s.id === id);
+    const server = servers.find((s: any) => s.id === id);
     if (!server || !server.containerId) {
       return res.status(404).json({ error: "Not found" });
     }

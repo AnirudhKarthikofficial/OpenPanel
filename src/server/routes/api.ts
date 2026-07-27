@@ -1,5 +1,4 @@
 import express from "express";
-import jwt from "jsonwebtoken";
 import { readJSON } from "../services/db.js";
 
 const router = express.Router();

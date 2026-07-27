@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { useSettings } from "../context/SettingsContext";

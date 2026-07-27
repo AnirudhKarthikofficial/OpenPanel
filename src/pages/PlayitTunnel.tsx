@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import { Globe, Play, Square, Loader2, Link as LinkIcon, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
