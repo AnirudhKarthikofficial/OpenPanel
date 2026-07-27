@@ -99,8 +99,6 @@ install_panel() {
         log_success "Docker is already installed."
     fi
 
-        fi
-    fi
 
     log_info "Downloading and setting up the JTG Panel..."
     
