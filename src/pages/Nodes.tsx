@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { Server as ServerIcon, Plus, Trash2, Key, Terminal, Globe, ServerCog, X } from "lucide-react";
+import { Server as ServerIcon, Plus, Trash2, Key, Terminal, Globe, ServerCog, X, RefreshCw } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 
@@ -10,9 +10,9 @@ export default function Nodes() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
-  const [setupPort, setSetupPort] = useState("67678");
+  const [setupPort, setSetupPort] = useState("6768");
   const [cfToken, setCfToken] = useState("");
-  const [formData, setFormData] = useState({ name: "", ip: "", port: "67678", key: "" });
+  const [formData, setFormData] = useState({ name: "", ip: "", port: "", key: "" });
 
   const fetchNodes = async () => {
     try {
@@ -41,7 +41,7 @@ export default function Nodes() {
     try {
       await axios.post("/api/nodes", { name, ip, port, key });
       setIsAddModalOpen(false);
-      setFormData({ name: "", ip: "", port: "67678", key: "" });
+      setFormData({ name: "", ip: "", port: "", key: "" });
       fetchNodes();
     } catch (e) {
       console.error(e);
@@ -79,6 +79,14 @@ export default function Nodes() {
           </p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={fetchNodes}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-all"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
           <button
             onClick={() => setIsSetupModalOpen(true)}
             className="flex items-center gap-2 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-2 text-sm font-semibold text-indigo-400 hover:bg-indigo-500/20 transition-all"
@@ -160,13 +168,13 @@ export default function Nodes() {
               </p>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Custom Port (e.g. 67678)</label>
+                <label className="block text-sm font-medium mb-1">Custom Port (e.g. 6768)</label>
                 <input 
                   type="text" 
                   value={setupPort}
                   onChange={(e) => setSetupPort(e.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  placeholder="67678"
+                  placeholder="6768"
                 />
               </div>
 
@@ -184,10 +192,10 @@ export default function Nodes() {
 
               <div className="relative">
                 <pre className="overflow-x-auto rounded-xl bg-black/50 p-4 text-sm text-emerald-400 border border-white/5 whitespace-pre-wrap break-all">
-                  <code>{`curl -sSL ${window.location.origin}/node.sh | bash -s -- --port ${setupPort || "67678"}${cfToken ? ` --cf-token ${cfToken}` : ""}`}</code>
+                  <code>{`curl -sSL ${window.location.origin}/node.sh | bash -s -- --port ${setupPort || "6768"}${cfToken ? ` --cf-token ${cfToken}` : ""}`}</code>
                 </pre>
                 <button 
-                  onClick={() => navigator.clipboard.writeText(`curl -sSL ${window.location.origin}/node.sh | bash -s -- --port ${setupPort || "67678"}${cfToken ? ` --cf-token ${cfToken}` : ""}`)}
+                  onClick={() => navigator.clipboard.writeText(`curl -sSL ${window.location.origin}/node.sh | bash -s -- --port ${setupPort || "6768"}${cfToken ? ` --cf-token ${cfToken}` : ""}`)}
                   className="absolute right-2 top-2 rounded-lg bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
                 >
                   Copy
@@ -236,13 +244,13 @@ export default function Nodes() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-muted-foreground">Port</label>
+                  <label className="mb-1 block text-sm font-medium text-muted-foreground">Port (Optional)</label>
                   <input
-                    required
                     type="text"
                     value={formData.port}
                     onChange={e => setFormData({...formData, port: e.target.value})}
                     className="w-full rounded-xl border border-border bg-background p-3 text-sm text-foreground focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    placeholder="e.g. 6768"
                   />
                 </div>
               </div>

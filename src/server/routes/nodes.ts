@@ -57,7 +57,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const { name, ip, port, key } = req.body;
 
-  if (!name || !ip || !port || !key) {
+  if (!name || !ip || !key) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -67,7 +67,7 @@ router.post("/", async (req, res) => {
     id: crypto.randomBytes(8).toString("hex"),
     name,
     ip,
-    port: Number(port),
+    port: port ? Number(port) : 6768,
     key,
     isLocal: false,
     status: "connecting",

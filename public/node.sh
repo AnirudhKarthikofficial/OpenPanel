@@ -63,13 +63,15 @@ cat << 'PKGEOF' > package.json
   "dependencies": {
     "express": "^4.18.2",
     "http-proxy-middleware": "^2.0.6",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5"
   }
 }
 PKGEOF
 
 # Create agent.js
 cat << 'AGENTEOF' > agent.js
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const cors = require('cors');
@@ -80,6 +82,9 @@ app.use(cors());
 // Auth Middleware
 app.use((req, res, next) => {
   const auth = req.headers.authorization;
+  if (!process.env.NODE_KEY) {
+    return res.status(500).send('Node key not configured properly.');
+  }
   if (!auth || auth !== 'Bearer ' + process.env.NODE_KEY) {
     return res.status(401).send('Unauthorized');
   }
@@ -110,6 +115,8 @@ echo "NODE_KEY=$NODE_KEY" > .env
 echo "PORT=$PORT" >> .env
 
 echo "[+] Starting Node Agent..."
+pm2 stop jtg-node 2>/dev/null || true
+pm2 delete jtg-node 2>/dev/null || true
 pm2 start agent.js --name jtg-node
 pm2 save
 pm2 startup | tail -n 1 > pm2-startup.sh
@@ -120,9 +127,13 @@ IP_ADDR=$(curl -s ifconfig.me || echo "YOUR_VPS_IP")
 
 if [ -n "$CF_TOKEN" ]; then
     echo "[+] Cloudflare Tunnel token provided. Installing cloudflared..."
-    curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-    dpkg -i cloudflared.deb
-    rm cloudflared.deb
+    if ! command -v cloudflared &> /dev/null; then
+      curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+      dpkg -i cloudflared.deb
+      rm cloudflared.deb
+    else
+      echo "[+] Cloudflared is already installed."
+    fi
     echo "[+] Starting Cloudflare Tunnel service..."
     cloudflared service install $CF_TOKEN
 fi
@@ -134,7 +145,7 @@ echo "Use the following details in your Panel to connect this node:"
 echo ""
 echo "  IP Address : $IP_ADDR"
 if [ -n "$CF_TOKEN" ]; then
-echo "  Cloudflare : Yes (HTTP Domain mapped in your Zero Trust dashboard)"
+echo "  Cloudflare : Yes (HTTP Domain mapped in your Zero Trust dashboard to http://localhost:$PORT)"
 fi
 echo "  Port       : $PORT"
 echo "  Node Key   : $NODE_KEY"
