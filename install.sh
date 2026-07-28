@@ -306,56 +306,18 @@ setup_dev_panel() {
     
     log_info "Initializing Developer Panel separately via dev.jtg..."
     
-    if [ ! -f "dev.jtg" ]; then
-        log_info "Creating dev.jtg initialization script..."
-cat << 'EOF' > dev.jtg
-#!/bin/bash
-# JTG Developer Panel & Podman Environment Initializer
-set -e
-
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-echo -e "${BLUE}[JTG DEV] Initializing Developer Panel & Podman Mode...${NC}"
-
-if command -v podman &> /dev/null; then
-    echo -e "${GREEN}[JTG DEV] Podman runtime detected.${NC}"
-else
-    echo -e "${YELLOW}[JTG DEV] Podman not found. Checking Docker...${NC}"
-    if command -v docker &> /dev/null; then
-        echo -e "${GREEN}[JTG DEV] Docker engine available.${NC}"
-    fi
-fi
-
-if [ -f ".env" ]; then
-    if ! grep -q "VITE_ENABLE_DEVELOPER_PANEL" .env; then
-        echo "VITE_ENABLE_DEVELOPER_PANEL=true" >> .env
+    chmod +x dev.jtg 2>/dev/null || true
+    if [ -f "dev.jtg" ]; then
+        log_info "Executing dev.jtg installer..."
+        bash dev.jtg
     else
-        sed -i 's/VITE_ENABLE_DEVELOPER_PANEL=.*/VITE_ENABLE_DEVELOPER_PANEL=true/g' .env 2>/dev/null || true
+        log_error "dev.jtg script not found!"
     fi
-else
-    echo "PORT=3000" > .env
-    echo "DEV_PORT=3000" >> .env
-    echo "VITE_ENABLE_DEVELOPER_PANEL=true" >> .env
-    echo "JWT_SECRET=$(head -c 32 /dev/urandom | base64)" >> .env
-fi
-
-export PODMAN_USERNS=keep-id
-export PODMAN_ROOTLESS=1
-
-echo -e "${GREEN}[SUCCESS] Developer Panel initialized on Port 3000 in dev.jtg!${NC}"
-EOF
-        chmod +x dev.jtg 2>/dev/null || true
-    fi
-
-    log_info "Running dev.jtg script..."
-    bash dev.jtg
 
     log_success "=================================================="
     log_success " Developer Panel initialized on Port 3000!"
     log_success " Configured in dev.jtg with Podman/Docker support."
+    log_success " Separate PM2 process: jtg-dev-panel"
     log_success "=================================================="
 }
 
