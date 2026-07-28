@@ -300,6 +300,65 @@ restart_panel() {
     fi
 }
 
+setup_dev_panel() {
+    print_banner
+    echo -e "${BOLD}--- [5] Setup Developer Panel & Podman Mode (Port 3000) ---${NC}\n"
+    
+    log_info "Initializing Developer Panel separately via dev.jtg..."
+    
+    if [ ! -f "dev.jtg" ]; then
+        log_info "Creating dev.jtg initialization script..."
+cat << 'EOF' > dev.jtg
+#!/bin/bash
+# JTG Developer Panel & Podman Environment Initializer
+set -e
+
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${BLUE}[JTG DEV] Initializing Developer Panel & Podman Mode...${NC}"
+
+if command -v podman &> /dev/null; then
+    echo -e "${GREEN}[JTG DEV] Podman runtime detected.${NC}"
+else
+    echo -e "${YELLOW}[JTG DEV] Podman not found. Checking Docker...${NC}"
+    if command -v docker &> /dev/null; then
+        echo -e "${GREEN}[JTG DEV] Docker engine available.${NC}"
+    fi
+fi
+
+if [ -f ".env" ]; then
+    if ! grep -q "VITE_ENABLE_DEVELOPER_PANEL" .env; then
+        echo "VITE_ENABLE_DEVELOPER_PANEL=true" >> .env
+    else
+        sed -i 's/VITE_ENABLE_DEVELOPER_PANEL=.*/VITE_ENABLE_DEVELOPER_PANEL=true/g' .env 2>/dev/null || true
+    fi
+else
+    echo "PORT=3000" > .env
+    echo "DEV_PORT=3000" >> .env
+    echo "VITE_ENABLE_DEVELOPER_PANEL=true" >> .env
+    echo "JWT_SECRET=$(head -c 32 /dev/urandom | base64)" >> .env
+fi
+
+export PODMAN_USERNS=keep-id
+export PODMAN_ROOTLESS=1
+
+echo -e "${GREEN}[SUCCESS] Developer Panel initialized on Port 3000 in dev.jtg!${NC}"
+EOF
+        chmod +x dev.jtg 2>/dev/null || true
+    fi
+
+    log_info "Running dev.jtg script..."
+    bash dev.jtg
+
+    log_success "=================================================="
+    log_success " Developer Panel initialized on Port 3000!"
+    log_success " Configured in dev.jtg with Podman/Docker support."
+    log_success "=================================================="
+}
+
 # Main menu loop
 while true; do
     print_banner
@@ -307,9 +366,10 @@ while true; do
     echo -e "  ${BOLD}2)${NC} Update Panel"
     echo -e "  ${BOLD}3)${NC} Create Admin User"
     echo -e "  ${BOLD}4)${NC} Restart Panel"
-    echo -e "  ${BOLD}5)${NC} Exit"
+    echo -e "  ${BOLD}5)${NC} Developer Panel Setup (Port 3000 & Podman - dev.jtg)"
+    echo -e "  ${BOLD}6)${NC} Exit"
     echo -e "\n========================================================"
-    read -p " Choose an option (1-5): " CHOICE
+    read -p " Choose an option (1-6): " CHOICE
 
     case "$CHOICE" in
         1)
@@ -329,11 +389,15 @@ while true; do
             read -p "Press Enter to return to main menu..."
             ;;
         5)
+            setup_dev_panel
+            read -p "Press Enter to return to main menu..."
+            ;;
+        6)
             echo -e "\n${YELLOW}Exiting script... Goodbye!${NC}\n"
             exit 0
             ;;
         *)
-            log_error "Invalid option! Please enter 1, 2, 3, 4, or 5."
+            log_error "Invalid option! Please enter 1, 2, 3, 4, 5, or 6."
             sleep 1.5
             ;;
     esac
