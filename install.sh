@@ -60,23 +60,72 @@ install_panel() {
     echo -e "${BOLD}--- [1] Full Panel Installation ---${NC}\n"
 
     check_root
-    log_info "Updating system packages and installing dependencies..."
-    
+    log_info "Checking system environment and repairing package manager if needed..."
+
+    # Auto-repair broken dpkg / apt state if apt exists
     if command -v apt-get &> /dev/null; then
+        sudo dpkg --configure -a 2>/dev/null || true
+        sudo apt-get install -f -y 2>/dev/null || true
         sudo apt-get update -y || true
-        sudo apt-get install -y curl git build-essential ca-certificates || log_warning "Some packages failed to install, continuing..."
+        sudo apt-get install -y curl git build-essential ca-certificates tar xz-utils || log_warning "Some system packages failed to install, continuing..."
     elif command -v yum &> /dev/null; then
         sudo yum update -y || true
-        sudo yum install -y curl git make gcc-c++ ca-certificates || log_warning "Some packages failed to install, continuing..."
+        sudo yum install -y curl git make gcc-c++ ca-certificates tar xz || log_warning "Some system packages failed to install, continuing..."
     fi
 
-    # Setup and install Node.js 22.x if not already at least v22
-    if ! command -v node &> /dev/null || [ $(node -v | cut -d'.' -f1 | tr -d 'v') -lt 22 ]; then
-        log_info "Installing Node.js 22.x..."
-        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-        sudo apt-get install -y nodejs || log_error "Failed to install Node.js"
+    # Ensure Node.js is installed and version is >= 22 (or >= 20.19)
+    NEED_NODE_UPGRADE=0
+    if ! command -v node &> /dev/null; then
+        NEED_NODE_UPGRADE=1
     else
-        log_success "Node.js $(node -v) is already installed."
+        NODE_MAJOR=$(node -v | cut -d'.' -f1 | tr -d 'v')
+        NODE_MINOR=$(node -v | cut -d'.' -f2)
+        if [ "$NODE_MAJOR" -lt 22 ]; then
+            if [ "$NODE_MAJOR" -lt 20 ] || [ "$NODE_MINOR" -lt 19 ]; then
+                NEED_NODE_UPGRADE=1
+            fi
+        fi
+    fi
+
+    if [ "$NEED_NODE_UPGRADE" -eq 1 ]; then
+        log_info "Installing / Upgrading to Node.js 22.x..."
+        
+        # Try Nodesource first
+        if command -v apt-get &> /dev/null; then
+            curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - 2>/dev/null || true
+            sudo apt-get install -y nodejs 2>/dev/null || true
+        fi
+
+        # Check if node upgraded properly
+        CURRENT_NODE_MAJOR=0
+        if command -v node &> /dev/null; then
+            CURRENT_NODE_MAJOR=$(node -v | cut -d'.' -f1 | tr -d 'v')
+        fi
+
+        # Fallback to direct Node.js v22 binary installation if apt/nodesource failed
+        if [ "$CURRENT_NODE_MAJOR" -lt 22 ]; then
+            log_info "Installing Node.js 22.13.1 directly from binary tarball..."
+            ARCH=$(uname -m)
+            case "$ARCH" in
+                x86_64) NODE_ARCH="x64" ;;
+                aarch64) NODE_ARCH="arm64" ;;
+                armv7l) NODE_ARCH="armv7l" ;;
+                *) NODE_ARCH="x64" ;;
+            esac
+            
+            NODE_DIST="node-v22.13.1-linux-${NODE_ARCH}"
+            curl -fsSL "https://nodejs.org/dist/v22.13.1/${NODE_DIST}.tar.xz" -o /tmp/node22.tar.xz || true
+            if [ -f "/tmp/node22.tar.xz" ]; then
+                sudo tar -xJf /tmp/node22.tar.xz -C /usr/local --strip-components=1 2>/dev/null || tar -xJf /tmp/node22.tar.xz -C /usr/local --strip-components=1 2>/dev/null || true
+                rm -f /tmp/node22.tar.xz
+            fi
+        fi
+    fi
+
+    if command -v node &> /dev/null; then
+        log_success "Node.js $(node -v) is ready."
+    else
+        log_error "Node.js installation could not be completed automatically."
     fi
     
     # Install PM2 globally
