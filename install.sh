@@ -70,10 +70,10 @@ install_panel() {
         sudo yum install -y curl git make gcc-c++ ca-certificates || log_warning "Some packages failed to install, continuing..."
     fi
 
-    # Setup and install Node.js 20.x if not already at least v20
-    if ! command -v node &> /dev/null || [ $(node -v | cut -d'.' -f1 | tr -d 'v') -lt 20 ]; then
-        log_info "Installing Node.js 20.x..."
-        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    # Setup and install Node.js 22.x if not already at least v22
+    if ! command -v node &> /dev/null || [ $(node -v | cut -d'.' -f1 | tr -d 'v') -lt 22 ]; then
+        log_info "Installing Node.js 22.x..."
+        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
         sudo apt-get install -y nodejs || log_error "Failed to install Node.js"
     else
         log_success "Node.js $(node -v) is already installed."
