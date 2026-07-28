@@ -300,27 +300,6 @@ restart_panel() {
     fi
 }
 
-setup_dev_panel() {
-    print_banner
-    echo -e "${BOLD}--- [5] Setup Developer Panel & Podman Mode (Port 3000) ---${NC}\n"
-    
-    log_info "Initializing Developer Panel separately via dev.jtg..."
-    
-    chmod +x dev.jtg 2>/dev/null || true
-    if [ -f "dev.jtg" ]; then
-        log_info "Executing dev.jtg installer..."
-        bash dev.jtg
-    else
-        log_error "dev.jtg script not found!"
-    fi
-
-    log_success "=================================================="
-    log_success " Developer Panel initialized on Port 3000!"
-    log_success " Configured in dev.jtg with Podman/Docker support."
-    log_success " Separate PM2 process: jtg-dev-panel"
-    log_success "=================================================="
-}
-
 # Main menu loop
 while true; do
     print_banner

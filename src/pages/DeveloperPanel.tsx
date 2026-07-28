@@ -23,21 +23,21 @@ export default function DeveloperPanel() {
       TYPE: "${config.type}"
       VERSION: "${config.version}"
       MEMORY: "${config.memory}"
-      # Podman Rootless Compatibility:
+      # Docker Rootless Compatibility:
       # By default, the image drops privileges to UID 1000. 
-      # In rootless Podman, volume ownership gets mapped to your host user.
+      # In rootless Docker, volume ownership gets mapped to your host user.
       # Setting UID=0 prevents the container from internally switching users,
       # avoiding permission errors when writing to the host volume mount.
       UID: "0"
       GID: "0"
     volumes:
       # The :Z flag labels the volume for SELinux (used on Fedora/RHEL).
-      # This is crucial for rootless Podman to access the directory.
+      # This is crucial for rootless Docker to access the directory.
       - ./data:/data:Z
     # Keeps the console interactive
     stdin_open: true
     tty: true
-    # Use podman-compose up/down to manage lifecycle. 
+    # Use docker-compose up/down to manage lifecycle. 
     # Optional restart policy if the server crashes:
     restart: on-failure:3
 `;
@@ -63,9 +63,9 @@ export default function DeveloperPanel() {
             <Server className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Minecraft Podman Builder</h1>
+            <h1 className="text-3xl font-bold text-slate-100 tracking-tight">Minecraft Docker Builder</h1>
             <p className="text-slate-500 text-sm mt-1">
-              Generate rootless <code className="text-emerald-400/80">podman-compose</code> configurations for <code className="text-emerald-400/80">itzg/minecraft-server</code>.
+              Generate rootless <code className="text-emerald-400/80">docker-compose</code> configurations for <code className="text-emerald-400/80">itzg/minecraft-server</code>.
             </p>
           </div>
         </header>
@@ -150,7 +150,7 @@ export default function DeveloperPanel() {
                  Rootless Mode Fixes
                </h3>
                <p className="text-sm text-emerald-200/70 leading-relaxed">
-                 Using <strong>UID=0</strong> and <strong>GID=0</strong> tells the entrypoint script not to switch users internally. Because the container is rootless, "root" inside the container safely maps to your unprivileged user on the host. This fixes standard volume permission denied errors without needing <code className="bg-emerald-900/40 px-1 rounded">podman unshare</code>.
+                 Using <strong>UID=0</strong> and <strong>GID=0</strong> tells the entrypoint script not to switch users internally. Because the container is rootless, "root" inside the container safely maps to your unprivileged user on the host. This fixes standard volume permission denied errors without needing <code className="bg-emerald-900/40 px-1 rounded">docker unshare</code>.
                </p>
             </div>
           </div>
@@ -194,18 +194,18 @@ export default function DeveloperPanel() {
                   <p className="text-sm mt-1">Paste the copied configuration above into a file named <code className="text-emerald-400 bg-emerald-400/10 px-1 rounded">compose.yaml</code>.</p>
                 </li>
                 <li>
-                  <span className="text-slate-200">Start the server using podman-compose:</span>
+                  <span className="text-slate-200">Start the server using docker-compose:</span>
                   <div className="mt-2 bg-slate-950 border border-slate-800 p-3 rounded-lg font-mono text-sm text-emerald-400">
-                    podman-compose up -d
+                    docker-compose up -d
                   </div>
                   <p className="text-sm mt-2">
-                    Note: If you don't have <code className="text-emerald-400 bg-emerald-400/10 px-1 rounded">podman-compose</code>, you can simply use <code className="text-emerald-400 bg-emerald-400/10 px-1 rounded">podman compose up -d</code> on newer Podman versions (v4+).
+                    Note: If you don't have <code className="text-emerald-400 bg-emerald-400/10 px-1 rounded">docker-compose</code>, you can simply use <code className="text-emerald-400 bg-emerald-400/10 px-1 rounded">docker compose up -d</code> on newer Docker versions (v4+).
                   </p>
                 </li>
                 <li>
                   <span className="text-slate-200">Check the logs or interact with the console:</span>
                   <div className="mt-2 bg-slate-950 border border-slate-800 p-3 rounded-lg font-mono text-sm text-emerald-400">
-                    podman attach {config.name}
+                    docker attach {config.name}
                   </div>
                   <p className="text-sm mt-2 text-amber-500/80 italic">To detach from the console without stopping the server, press <kbd className="font-sans px-1 bg-slate-800 rounded">Ctrl+P</kbd> followed by <kbd className="font-sans px-1 bg-slate-800 rounded">Ctrl+Q</kbd>.</p>
                 </li>
