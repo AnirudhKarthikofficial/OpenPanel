@@ -21,6 +21,9 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
     links.push({ name: "API Keys", path: "/api-keys", icon: <Key size={20} /> });
   }
   links.push({ name: "Settings", path: "/settings", icon: <Settings size={20} /> });
+  if ((import.meta as any).env.VITE_ENABLE_DEVELOPER_PANEL === "true") {
+    links.push({ name: "Developer", path: "/developer", icon: <Box size={20} /> });
+  }
 
   return (
     <div className={`h-full flex flex-col bg-card/80 backdrop-blur-xl border-r border-border transition-all duration-300 z-20 ${isCollapsed ? 'w-20' : 'w-64'}`}>

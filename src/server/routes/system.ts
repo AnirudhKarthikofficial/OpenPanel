@@ -2,6 +2,9 @@ import express from "express";
 import { getVersions } from "../services/docker.js";
 import { requireAuth } from "../middleware/auth.js";
 import os from "os";
+import { exec } from "child_process";
+import util from "util";
+const execPromise = util.promisify(exec);
 import { readJSON, writeJSON } from "../services/db.js";
 import bcrypt from "bcryptjs";
 
@@ -21,7 +24,20 @@ router.get("/paper-versions", async (req, res) => {
   res.json(versions);
 });
 
-router.get("/stats", (req, res) => {
+router.get("/stats", async (req, res) => {
+
+  let diskSpace = 0;
+  try {
+    const { stdout } = await execPromise("df -h /home");
+    const lines = stdout.split("\n");
+    if (lines.length > 1) {
+      const parts = lines[1].trim().split(/\s+/);
+      if (parts.length >= 5) {
+        diskSpace = parseInt(parts[4].replace("%", "")) || 0;
+      }
+    }
+  } catch (err) {}
+
     const totalMemory = os.totalmem();
   const freeMemory = os.freemem();
   
@@ -30,7 +46,7 @@ router.get("/stats", (req, res) => {
     totalMemory,
     freeMemory,
     ramUsage: Math.round(((totalMemory - freeMemory) / totalMemory) * 100),
-    diskUsage: 0, // Mocked for now
+    diskUsage: diskSpace, // From df -h /home
   });
 });
 

@@ -650,15 +650,6 @@ export default function FileManager({ serverId }: { serverId: string }) {
 
                       {/* Quick Action Buttons */}
                       <div className="flex items-center space-x-1">
-                        {/* Download button for file OR folder */}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDownload(f.name, f.isDirectory); }}
-                          className="p-1.5 text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
-                          title={f.isDirectory ? "Download Folder as ZIP" : "Download File"}
-                        >
-                          <Download size={15} />
-                        </button>
-
                         {/* Dropdown Options Button */}
                         <div className="relative" ref={isMenuOpen ? menuRef : null}>
                           <button

@@ -17,6 +17,7 @@ import ApiKeysPage from "./pages/ApiKeysPage";
 import AdminServers from "./pages/AdminServers";
 import PlayitTunnel from "./pages/PlayitTunnel";
 import Nodes from "./pages/Nodes";
+import DeveloperPanel from "./pages/DeveloperPanel";
 import Layout from "./components/Layout";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsProvider, useSettings } from "./context/SettingsContext";
