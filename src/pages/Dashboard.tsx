@@ -88,7 +88,7 @@ const StatusPill = ({ status }: any) => {
 
 export default function Dashboard() {
   const { panelName } = useSettings();
-  const { stats, servers: realServers, refetch } = useDashboardData();
+  const { stats, statsHistory, servers: realServers, refetch } = useDashboardData();
   const [servers, setServers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [view, setView] = useState('grid');
@@ -96,7 +96,7 @@ export default function Dashboard() {
   const [actionInProgress, setActionInProgress] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (realServers) {
+    if (realServers && Array.isArray(realServers)) {
       setServers(realServers.map(s => ({
         id: s.id,
         name: s.name,
@@ -110,12 +110,24 @@ export default function Dashboard() {
     }
   }, [realServers]);
 
-  const STATS = useMemo(() => [
-    { id: 'cpu', label: 'Cluster CPU', value: `${(stats?.cpuUsage || 0).toFixed(1)}%`, data: generateSparkline(10, 10, Math.max(20, stats?.cpuUsage || 0)), color: '#8b5cf6' },
-    { id: 'ram', label: 'Memory Usage', value: `${(stats?.ramUsage || 0).toFixed(1)} GB`, data: generateSparkline(10, 10, Math.max(20, stats?.ramUsage || 0)), color: '#06b6d4' },
-    { id: 'net', label: 'Servers Online', value: `${realServers.filter(s => s.status === 'online').length} / ${realServers.length}`, data: generateSparkline(10, 40, 90), color: '#10b981' },
-    { id: 'nodes', label: 'Active Containers', value: `${stats?.activeContainers || 0} / ${stats?.totalContainers || 0}`, data: generateSparkline(10, 90, 100), color: '#f59e0b' },
-  ], [stats, realServers]);
+  const STATS = useMemo(() => {
+    const defaultData = Array(20).fill(0);
+    const cpuData = statsHistory?.length ? statsHistory.map((s: any) => s.cpuUsage || 0) : defaultData;
+    const ramData = statsHistory?.length ? statsHistory.map((s: any) => s.ramUsage || 0) : defaultData;
+    const containersData = statsHistory?.length ? statsHistory.map((s: any) => s.activeContainers || 0) : defaultData;
+    
+    // pad with 0s if length is less than 2
+    while (cpuData.length < 2) cpuData.unshift(0);
+    while (ramData.length < 2) ramData.unshift(0);
+    while (containersData.length < 2) containersData.unshift(0);
+
+    return [
+      { id: 'cpu', label: 'Cluster CPU', value: `${(stats?.cpuUsage || 0).toFixed(1)}%`, data: cpuData, color: '#8b5cf6' },
+      { id: 'ram', label: 'Memory Usage', value: `${(stats?.ramUsage || 0).toFixed(1)}%`, data: ramData, color: '#06b6d4' },
+      { id: 'net', label: 'Servers Online', value: `${(Array.isArray(realServers) ? realServers : []).filter(s => s.status === 'online').length} / ${(Array.isArray(realServers) ? realServers : []).length}`, data: defaultData, color: '#10b981' },
+      { id: 'nodes', label: 'Active Containers', value: `${stats?.activeContainers || 0} / ${stats?.totalContainers || 0}`, data: containersData, color: '#f59e0b' }
+    ];
+  }, [stats, statsHistory, realServers]);
 
   const handleAction = async (id: string, action: string) => {
     setActionInProgress(prev => ({ ...prev, [id]: true }));

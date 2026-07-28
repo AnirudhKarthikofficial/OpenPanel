@@ -328,10 +328,9 @@ while true; do
     echo -e "  ${BOLD}2)${NC} Update Panel"
     echo -e "  ${BOLD}3)${NC} Create Admin User"
     echo -e "  ${BOLD}4)${NC} Restart Panel"
-    echo -e "  ${BOLD}5)${NC} Developer Panel Setup (Port 3000 & Podman - dev.jtg)"
-    echo -e "  ${BOLD}6)${NC} Exit"
+    echo -e "  ${BOLD}5)${NC} Exit"
     echo -e "\n========================================================"
-    read -p " Choose an option (1-6): " CHOICE
+    read -p " Choose an option (1-5): " CHOICE
 
     case "$CHOICE" in
         1)
@@ -351,15 +350,11 @@ while true; do
             read -p "Press Enter to return to main menu..."
             ;;
         5)
-            setup_dev_panel
-            read -p "Press Enter to return to main menu..."
-            ;;
-        6)
             echo -e "\n${YELLOW}Exiting script... Goodbye!${NC}\n"
             exit 0
             ;;
         *)
-            log_error "Invalid option! Please enter 1, 2, 3, 4, 5, or 6."
+            log_error "Invalid option! Please enter 1, 2, 3, 4, or 5."
             sleep 1.5
             ;;
     esac

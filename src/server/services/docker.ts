@@ -59,7 +59,7 @@ export const getDocker = async (nodeId?: string) => {
 };
 
 // Mock state for sandbox demo
-const mockState: Record<string, boolean> = {};
+export const mockState: Record<string, boolean> = {};
 
 export const getVersions = async (type: string = "PAPER") => {
   const normalizedType = type.toUpperCase();

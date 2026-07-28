@@ -7,6 +7,7 @@ const POLL_MS = 5_000;
 
 export function useDashboardData() {
   const [stats, setStats] = useState<SystemStats | null>(null);
+  const [statsHistory, setStatsHistory] = useState<SystemStats[]>([]);
   const [servers, setServers] = useState<ServerSummary[]>([]);
   const [state, setState] = useState<FetchState>("loading");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -31,12 +32,16 @@ export function useDashboardData() {
 
       if (statsRes.status === "fulfilled") {
         setStats(statsRes.value.data);
+        setStatsHistory(prev => {
+          const next = [...prev, statsRes.value.data];
+          return next.slice(-20);
+        });
       } else {
         hasError = true;
       }
 
       if (serversRes.status === "fulfilled") {
-        setServers(serversRes.value.data ?? []);
+        setServers(Array.isArray(serversRes.value.data) ? serversRes.value.data : []);
       } else {
         hasError = true;
       }
@@ -74,5 +79,5 @@ export function useDashboardData() {
     };
   }, [fetchData]);
 
-  return { stats, servers, state, lastUpdated, refetch: fetchData };
+  return { stats, statsHistory, servers, state, lastUpdated, refetch: fetchData };
 }
