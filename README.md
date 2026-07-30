@@ -1,4 +1,4 @@
-# JTG Panel
+# OpenPanel
 
 Made by Jishnu
 

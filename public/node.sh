@@ -1,5 +1,5 @@
 #!/bin/bash
-# Node Installer Script for JTG Panel
+# Node Installer Script for OpenPanel
 # This script sets up a remote node for the panel
 
 PORT=6768
@@ -15,7 +15,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 echo "======================================"
-echo "    JTG Panel Node Setup Script       "
+echo "    OpenPanel Node Setup Script       "
 echo "======================================"
 
 # Check for root
@@ -58,7 +58,7 @@ cat << 'PKGEOF' > package.json
 {
   "name": "jtg-panel-node",
   "version": "1.0.0",
-  "description": "Node agent for JTG Panel",
+  "description": "Node agent for OpenPanel",
   "main": "agent.js",
   "dependencies": {
     "express": "^4.18.2",
