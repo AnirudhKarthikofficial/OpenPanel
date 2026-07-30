@@ -97,7 +97,7 @@ async function startServer() {
   }
 
   httpServer.listen(PORT, () => {
-    console.log(`OpenPanel running on port ${PORT}`);
+    console.log(`Open running on port ${PORT}`);
   });
 }
 
