@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =========================================================
-# JTG Panel - Automated Installation & Management Script
+# OpenPanel - Automated Installation & Management Script
 # Repository: https://github.com/JishnuTheGamer/Jtg
 # =========================================================
 
@@ -149,7 +149,7 @@ install_panel() {
     fi
 
 
-    log_info "Downloading and setting up the JTG Panel..."
+    log_info "Downloading and setting up the OpenPanel..."
     
     # Check if we are already in the Jtg directory
     if [ -f "package.json" ] && grep -q "react-example" "package.json" 2>/dev/null; then
@@ -230,7 +230,7 @@ EOF
 
 update_panel() {
     print_banner
-    echo -e "${BOLD}--- [2] Update JTG Panel ---${NC}\n"
+    echo -e "${BOLD}--- [2] Update OpenPanel ---${NC}\n"
     
     if [ -f "package.json" ] && grep -q "react-example" "package.json" 2>/dev/null; then
         WORK_DIR="."
@@ -289,7 +289,7 @@ create_admin_user() {
 
 restart_panel() {
     print_banner
-    echo -e "${BOLD}--- [4] Restart JTG Panel ---${NC}\n"
+    echo -e "${BOLD}--- [4] Restart OpenPanel ---${NC}\n"
     
     log_info "Restarting panel..."
     if command -v pm2 &> /dev/null || npx pm2 -v &> /dev/null; then
