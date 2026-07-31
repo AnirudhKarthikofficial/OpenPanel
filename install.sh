@@ -27,7 +27,7 @@ print_banner() {
     echo "   _| |_  | | | |__| || |  |  __/ | | |  __/ |          "
     echo "  |_____| |_|  \____||_|   \___|_| |_|\___|_|          "
     echo "                                                          "
-    echo "            JTG PANEL MANAGEMENT & INSTALLER              "
+    echo "            Open PANEL MANAGEMENT & INSTALLER              "
     echo "            Main Panel Default Port: 6767                 "
     echo "  ========================================================"
     echo -e "${NC}"
