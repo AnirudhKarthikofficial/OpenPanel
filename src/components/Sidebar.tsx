@@ -13,6 +13,7 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
     { name: "Overview", path: "/", icon: <LayoutDashboard size={20} /> },
     { name: "Nodes", path: "/nodes", icon: <Activity size={20} /> },
     { name: "Servers", path: "/servers", icon: <Server size={20} /> },
+    { name: "Analytics", path: "/analytics", icon: <Box size={20} /> },
   ];
   
   if (user?.role === "admin") {
