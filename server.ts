@@ -30,6 +30,7 @@ if (!fs.existsSync(path.join(DATA_DIR, "servers.json"))) fs.writeFileSync(path.j
 if (!fs.existsSync(path.join(DATA_DIR, "settings.json"))) fs.writeFileSync(path.join(DATA_DIR, "settings.json"), "{}");
 
 import { attachContainerSocket, getContainerLogs } from "./src/server/services/docker.js";
+import { initDefaults } from "./src/server/services/db.js";
 
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
@@ -79,7 +80,10 @@ app.use("/api", apiRoutes);
 
 import { initSFTPServer } from "./src/server/services/sftp.js";
 
+import { initDefaults } from "./src/server/services/db.js";
+
 async function startServer() {
+  await initDefaults();  // Initialize analytics data files
   await initSFTPServer();
 
   if (process.env.NODE_ENV !== "production") {

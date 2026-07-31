@@ -5,10 +5,10 @@ const router = express.Router();
 import authRoutes from "./auth.js";
 import serverRoutes from "./servers.js";
 import systemRoutes from "./system.js";
-import apiKeyRoutes from "./api-keys.js";
+import analyticsRoutes from "./analytics.js";
 import nodeRoutes from "./nodes.js";
 
-router.use("/auth", authRoutes);
+router.use("/analytics", analyticsRoutes);
 router.use("/servers", serverRoutes);
 router.use("/system", systemRoutes);
 router.use("/admin/api-keys", apiKeyRoutes);
