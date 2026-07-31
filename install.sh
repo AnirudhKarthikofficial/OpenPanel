@@ -2,7 +2,7 @@
 
 # =========================================================
 # OpenPanel - Automated Installation & Management Script
-# Repository: https://github.com/JishnuTheGamer/Jtg
+# Repository: https://github.com/AnirudhKarthikofficial/OpenPanel/
 # =========================================================
 
 set -e
