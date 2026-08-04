@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common["Authorization"] = `******;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       axios.get("/api/auth/me").then(res => {
         setUser(res.data.user);
         setLoading(false);
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(user);
     localStorage.setItem("openpanel_token", token);
     // Ensure axios has the Authorization header immediately after login
-    axios.defaults.headers.common["Authorization"] = `******;
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   };
 
   const logout = () => {

@@ -12,6 +12,7 @@ import apiKeyRoutes from "./api-keys.js";
 router.use("/analytics", analyticsRoutes);
 router.use("/servers", serverRoutes);
 router.use("/system", systemRoutes);
+router.use("/auth", authRoutes);
 router.use("/admin/api-keys", apiKeyRoutes);
 router.use("/nodes", nodeRoutes);
 
