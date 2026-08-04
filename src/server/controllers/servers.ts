@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import axios from "axios";
 import { readJSON, writeJSON } from "../services/db.js";
 import { createServerContainer, startContainer, stopContainer, restartContainer, deleteContainer, getContainerStatus, sendContainerCommand, attachContainerSocket, getContainerStats } from "../services/docker.js";
 import { createSftpUser, deleteSftpUser } from "../services/sftp.js";
@@ -982,4 +983,111 @@ export const updateSuspend = async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({ error: "Failed to suspend server" });
   }
+};
+
+export const downloadFileFromUrl = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { url, filePath } = req.body;
+
+  if (!url || !filePath) {
+    return res.status(400).json({ error: "Missing url or filePath" });
+  }
+
+  const targetPath = path.join(process.cwd(), ".data", "servers", id, filePath);
+
+  if (!targetPath.startsWith(path.join(process.cwd(), ".data", "servers", id))) {
+    return res.status(403).json({ error: "Invalid path" });
+  }
+
+  try {
+    const response = await axios({
+      method: "get",
+      url,
+      responseType: "stream"
+    });
+
+    // Ensure parent directory exists
+    await fs.ensureDir(path.dirname(targetPath));
+
+    const writer = fs.createWriteStream(targetPath);
+    response.data.pipe(writer);
+
+    await new Promise<void>((resolve, reject) => {
+      writer.on("finish", () => resolve());
+      writer.on("error", (err) => reject(err));
+    });
+
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message || "Download failed" });
+  }
+};
+
+export const getSchedules = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = (req as any).user;
+  const servers = await readJSON("servers.json") || [];
+  const server = servers.find((s: any) => s.id === id);
+  if (!server) return res.status(404).json({ error: "Server not found" });
+  if (user.role !== "admin" && user.role !== "owner" && server.owner !== user.id) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  const schedules = await readJSON("schedules.json") || [];
+  const serverSchedules = schedules.filter((sch: any) => sch.serverId === id);
+  res.json(serverSchedules);
+};
+
+export const createSchedule = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, action, intervalType, intervalMinutes, hour, minute, dayOfWeek } = req.body;
+  const user = (req as any).user;
+
+  const servers = await readJSON("servers.json") || [];
+  const server = servers.find((s: any) => s.id === id);
+  if (!server) return res.status(404).json({ error: "Server not found" });
+  if (user.role !== "admin" && user.role !== "owner" && server.owner !== user.id) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  if (!name || !action || !intervalType) {
+    return res.status(400).json({ error: "Missing required schedule fields" });
+  }
+
+  const schedules = await readJSON("schedules.json") || [];
+  const newSchedule = {
+    id: crypto.randomUUID(),
+    serverId: id,
+    name,
+    action,
+    intervalType,
+    intervalMinutes: intervalMinutes ? Number(intervalMinutes) : undefined,
+    hour: hour !== undefined ? Number(hour) : undefined,
+    minute: minute !== undefined ? Number(minute) : undefined,
+    dayOfWeek: dayOfWeek !== undefined ? Number(dayOfWeek) : undefined,
+    isActive: true,
+    lastRun: null,
+    createdAt: new Date().toISOString()
+  };
+
+  schedules.push(newSchedule);
+  await writeJSON("schedules.json", schedules);
+  res.json(newSchedule);
+};
+
+export const deleteSchedule = async (req: Request, res: Response) => {
+  const { id, scheduleId } = req.params;
+  const user = (req as any).user;
+
+  const servers = await readJSON("servers.json") || [];
+  const server = servers.find((s: any) => s.id === id);
+  if (!server) return res.status(404).json({ error: "Server not found" });
+  if (user.role !== "admin" && user.role !== "owner" && server.owner !== user.id) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  const schedules = await readJSON("schedules.json") || [];
+  const filtered = schedules.filter((sch: any) => sch.id !== scheduleId);
+  await writeJSON("schedules.json", filtered);
+  res.json({ success: true });
 };

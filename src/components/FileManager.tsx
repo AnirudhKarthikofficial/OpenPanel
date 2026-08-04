@@ -42,9 +42,11 @@ export default function FileManager({ serverId }: { serverId: string }) {
   const [toast, setToast] = useState<Toast | null>(null);
 
   // Modals
-  const [activeModal, setActiveModal] = useState<"create_file" | "create_folder" | "rename" | "delete" | "zip" | null>(null);
+  const [activeModal, setActiveModal] = useState<"create_file" | "create_folder" | "rename" | "delete" | "zip" | "download_url" | null>(null);
   const [modalInput, setModalInput] = useState("");
   const [targetItem, setTargetItem] = useState<{ name: string; isDirectory: boolean } | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState("");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -199,6 +201,36 @@ export default function FileManager({ serverId }: { serverId: string }) {
       }
     } catch (e) {
       showToast("Failed to create file", "error");
+    }
+  };
+
+  // 2.5 Download from URL
+  const submitDownloadUrl = async () => {
+    if (!downloadUrl.trim()) {
+      showToast("Download URL is required", "error");
+      return;
+    }
+    if (!modalInput.trim()) {
+      showToast("Destination file name is required", "error");
+      return;
+    }
+    const fileName = modalInput.trim();
+    setIsDownloading(true);
+    try {
+      const fullPath = path.endsWith("/") ? path + fileName : path + "/" + fileName;
+      await axios.post(`/api/servers/${serverId}/files/download-url`, {
+        url: downloadUrl.trim(),
+        filePath: fullPath
+      });
+      showToast(`Downloaded to '${fileName}'`, "success");
+      setActiveModal(null);
+      setDownloadUrl("");
+      setModalInput("");
+      fetchFiles();
+    } catch (e: any) {
+      showToast(e.response?.data?.error || "Download from URL failed", "error");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -534,6 +566,14 @@ export default function FileManager({ serverId }: { serverId: string }) {
                     <span>Upload</span>
                   </label>
                   <button
+                    onClick={() => { setModalInput(""); setDownloadUrl(""); setActiveModal("download_url"); }}
+                    className="flex items-center space-x-1.5 px-3 py-2 bg-muted/80 hover:bg-muted rounded-xl text-xs font-semibold text-foreground border border-border hover:border-indigo-500/40 transition-all cursor-pointer"
+                    title="Download from URL"
+                  >
+                    <Download size={15} className="text-emerald-400" />
+                    <span className="hidden md:inline">Download URL</span>
+                  </button>
+                  <button
                     onClick={fetchFiles}
                     className="p-2 bg-muted/80 hover:bg-muted rounded-xl text-muted-foreground hover:text-foreground border border-border transition-all"
                     title="Refresh Directory"
@@ -841,6 +881,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
                   {activeModal === "rename" && <><Edit2 size={18} className="text-blue-400" /> Rename {targetItem?.isDirectory ? "Folder" : "File"}</>}
                   {activeModal === "delete" && <><Trash2 size={18} className="text-red-400" /> Confirm Deletion</>}
                   {activeModal === "zip" && <><Archive size={18} className="text-emerald-400" /> Compress Selected Items</>}
+                  {activeModal === "download_url" && <><Download size={18} className="text-emerald-400" /> Download from URL</>}
                 </h3>
                 <button onClick={() => setActiveModal(null)} className="text-muted-foreground hover:text-foreground">
                   <X size={18} />
@@ -849,6 +890,33 @@ export default function FileManager({ serverId }: { serverId: string }) {
 
               {/* Modal Body */}
               <div>
+                {activeModal === "download_url" && (
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground">Download URL</label>
+                      <input
+                        autoFocus
+                        type="url"
+                        placeholder="https://example.com/file.zip"
+                        value={downloadUrl}
+                        onChange={(e) => setDownloadUrl(e.target.value)}
+                        className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground">Destination File Name (with extension)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. plugin.jar, world.zip"
+                        value={modalInput}
+                        onChange={(e) => setModalInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && submitDownloadUrl()}
+                        className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {activeModal === "create_file" && (
                   <div className="space-y-3">
                     <label className="text-xs font-semibold text-muted-foreground">File Name (including extension)</label>
@@ -940,6 +1008,19 @@ export default function FileManager({ serverId }: { serverId: string }) {
                 >
                   Cancel
                 </button>
+
+                {activeModal === "download_url" && (
+                  <button onClick={submitDownloadUrl} disabled={isDownloading} className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md disabled:opacity-50 flex items-center gap-1.5">
+                    {isDownloading ? (
+                      <>
+                        <div className="w-3 h-3 rounded-full border-2 border-white/50 border-t-white animate-spin" />
+                        Downloading...
+                      </>
+                    ) : (
+                      "Start Download"
+                    )}
+                  </button>
+                )}
 
                 {activeModal === "create_file" && (
                   <button onClick={submitCreateFile} className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md">

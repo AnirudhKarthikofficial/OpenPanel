@@ -17,7 +17,7 @@ export default function AnalyticsPage(): React.ReactElement {
   }, []);
 
   if (loading) {
-    return null;
+    return <div className="p-6 text-foreground">Loading...</div>;
   }
 
   return (

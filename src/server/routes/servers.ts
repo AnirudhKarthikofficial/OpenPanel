@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { requireAuth } from "../middleware/auth.js";
-import { getServers, createServer, getServer, deleteServer, startServer, stopServer, restartServer, changeServerVersion, getFiles, uploadFile, deleteFile, renameFile, saveFileContent, sendCommand, getServerStats, updateOwner, updateIpAlias, getBackups, createBackup, downloadBackup, deleteBackup, unzipFile, zipFiles, installPlugin, installMod, updateResources, updateSuspend , createFile, createDirectory, downloadFile} from "../controllers/servers.js";
+import { getServers, createServer, getServer, deleteServer, startServer, stopServer, restartServer, changeServerVersion, getFiles, uploadFile, deleteFile, renameFile, saveFileContent, sendCommand, getServerStats, updateOwner, updateIpAlias, getBackups, createBackup, downloadBackup, deleteBackup, unzipFile, zipFiles, installPlugin, installMod, updateResources, updateSuspend , createFile, createDirectory, downloadFile, downloadFileFromUrl, getSchedules, createSchedule, deleteSchedule} from "../controllers/servers.js";
 import multer from "multer";
 
 const router = express.Router();
@@ -30,6 +30,7 @@ router.post("/:id/command", sendCommand);
 // Simple file endpoints
 router.get("/:id/files", getFiles);
 router.get("/:id/files/download", downloadFile);
+router.post("/:id/files/download-url", downloadFileFromUrl);
 router.post("/:id/files/upload", upload.single("file"), uploadFile);
 router.post("/:id/files/rename", renameFile);
 router.post("/:id/files/save", saveFileContent);
@@ -44,6 +45,11 @@ router.get("/:id/backups", getBackups);
 router.post("/:id/backups", createBackup);
 router.get("/:id/backups/:filename", downloadBackup);
 router.delete("/:id/backups/:filename", deleteBackup);
+
+// Scheduler endpoints
+router.get("/:id/schedules", getSchedules);
+router.post("/:id/schedules", createSchedule);
+router.delete("/:id/schedules/:scheduleId", deleteSchedule);
 
 
 router.get("/:id/playit", async (req, res) => {

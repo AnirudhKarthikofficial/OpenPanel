@@ -7,6 +7,7 @@ import serverRoutes from "./servers.js";
 import systemRoutes from "./system.js";
 import analyticsRoutes from "./analytics.js";
 import nodeRoutes from "./nodes.js";
+import apiKeyRoutes from "./api-keys.js";
 
 router.use("/analytics", analyticsRoutes);
 router.use("/servers", serverRoutes);
