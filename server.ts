@@ -30,7 +30,7 @@ if (!fs.existsSync(path.join(DATA_DIR, "servers.json"))) fs.writeFileSync(path.j
 if (!fs.existsSync(path.join(DATA_DIR, "settings.json"))) fs.writeFileSync(path.join(DATA_DIR, "settings.json"), "{}");
 
 import { attachContainerSocket, getContainerLogs } from "./src/server/services/docker.js";
-import { initDefaults } from "./src/server/services/db.js";
+import { startScheduler } from "./src/server/services/scheduler.js";
 
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
@@ -85,6 +85,7 @@ import { initDefaults } from "./src/server/services/db.js";
 async function startServer() {
   await initDefaults();  // Initialize analytics data files
   await initSFTPServer();
+  startScheduler();
 
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

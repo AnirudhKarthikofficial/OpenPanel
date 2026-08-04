@@ -4,10 +4,11 @@ import React, { useEffect, useState } from "react";
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import { useParams, Link, Routes, Route, useLocation } from "react-router-dom";
 import axios from "axios";
-import { Terminal, Folder, Play, Square, RefreshCw, ArrowLeft, Sliders, Archive, AlertTriangle, Copy, Check, Menu, X, Users, LogOut, Lock } from "lucide-react";
+import { Terminal, Folder, Play, Square, RefreshCw, ArrowLeft, Sliders, Archive, AlertTriangle, Copy, Check, Menu, X, Users, LogOut, Lock, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import ServerConsole from "../components/ServerConsole";
+import ServerSchedules from "../components/ServerSchedules";
 import FileManager from "../components/FileManager";
 import ServerSettings from "../components/ServerSettings";
 import ServerProperties from "../components/ServerProperties";
@@ -128,6 +129,7 @@ export default function ServerView() {
   }
 
   tabs.push(
+    { name: "Schedules", path: `/servers/${id}/schedules`, exactPath: "schedules", icon: <Clock size={18} /> },
     { name: "Settings", path: `/servers/${id}/settings`, exactPath: "settings", icon: <Settings size={18} /> },
     { name: "Backup", path: `/servers/${id}/backup`, exactPath: "backup", icon: <Archive size={18} /> }
   );
@@ -318,6 +320,7 @@ export default function ServerView() {
              <Route path="/files" element={<FileManager serverId={id!} />} />
              <Route path="/sftp" element={<ServerSFTP serverId={id!} server={server} />} />
              <Route path="/subusers" element={<SubUsersManager serverId={id!} />} />
+             <Route path="/schedules" element={<ServerSchedules serverId={id!} />} />
              <Route path="/settings" element={<ServerSettings serverId={id!} server={server} />} />
              <Route path="/backup" element={<ServerBackups serverId={id!} />} />
              <Route path="/plugins" element={<PluginManager serverId={id!} />} />
