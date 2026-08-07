@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { requireAuth } from "../middleware/auth.js";
-import { getServers, createServer, getServer, deleteServer, startServer, stopServer, restartServer, changeServerVersion, getFiles, uploadFile, deleteFile, renameFile, saveFileContent, sendCommand, getServerStats, updateOwner, updateIpAlias, getBackups, createBackup, downloadBackup, deleteBackup, unzipFile, zipFiles, installPlugin, installMod, updateResources, updateSuspend , createFile, createDirectory, downloadFile, downloadFileFromUrl, getSchedules, createSchedule, deleteSchedule} from "../controllers/servers.js";
+import { getServers, createServer, getServer, deleteServer, startServer, stopServer, restartServer, changeServerVersion, getFiles, uploadFile, deleteFile, renameFile, saveFileContent, sendCommand, getServerStats, updateOwner, updateIpAlias, getBackups, createBackup, downloadBackup, deleteBackup, unzipFile, zipFiles, installPlugin, installMod, updateResources, updateSuspend , createFile, createDirectory, downloadFile, downloadFileFromUrl, getSchedules, createSchedule, deleteSchedule, getPlayitApiConfig, togglePlayitApi} from "../controllers/servers.js";
 import multer from "multer";
 
 const router = express.Router();
@@ -50,6 +50,10 @@ router.delete("/:id/backups/:filename", deleteBackup);
 router.get("/:id/schedules", getSchedules);
 router.post("/:id/schedules", createSchedule);
 router.delete("/:id/schedules/:scheduleId", deleteSchedule);
+
+// Playit.gg Control API endpoints
+router.get("/:id/playit-api", getPlayitApiConfig);
+router.post("/:id/playit-api/toggle", togglePlayitApi);
 
 
 router.get("/:id/playit", async (req, res) => {

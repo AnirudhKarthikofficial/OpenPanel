@@ -3,6 +3,7 @@ import axios from "axios";
 import { readJSON, writeJSON } from "../services/db.js";
 import { createServerContainer, startContainer, stopContainer, restartContainer, deleteContainer, getContainerStatus, sendContainerCommand, attachContainerSocket, getContainerStats } from "../services/docker.js";
 import { createSftpUser, deleteSftpUser } from "../services/sftp.js";
+import { createPlayitTunnel, deletePlayitTunnel } from "../services/playit.js";
 import crypto from "crypto";
 import fs from "fs-extra";
 import path from "path";
@@ -186,6 +187,14 @@ export const deleteServer = async (req: Request, res: Response) => {
     if (server.containerId) {
       await deleteContainer(server.containerId, server.nodeId);
     }
+
+    if (server.playitTunnelId) {
+      try {
+        await deletePlayitTunnel(server.playitTunnelId);
+      } catch (err) {
+        console.error("Failed to clean up playit tunnel on server deletion:", err);
+      }
+    }
     
     servers = servers.filter((s: any) => s.id !== id);
     await writeJSON("servers.json", servers);
@@ -235,6 +244,18 @@ export const startServer = async (req: Request, res: Response) => {
         throw startErr;
       }
     }
+    if (server.playitEnabled && !server.playitTunnelId) {
+      try {
+        const result = await createPlayitTunnel(server.id, server.name, server.port);
+        server.playitTunnelId = result.id;
+        server.publicAddress = result.publicAddress;
+        server.tunnelStatus = result.status;
+        await writeJSON("servers.json", servers);
+      } catch (err) {
+        console.error("Failed to auto-create playit tunnel on server start:", err);
+      }
+    }
+
     await attachContainerSocket(server.containerId, server.id, server.nodeId);
     res.json({ success: true });
   } catch (err: any) {
@@ -260,6 +281,18 @@ export const stopServer = async (req: Request, res: Response) => {
         throw stopErr;
       }
     }
+    if (server.playitEnabled && server.playitTunnelId) {
+      try {
+        await deletePlayitTunnel(server.playitTunnelId);
+        server.playitTunnelId = undefined;
+        server.publicAddress = "";
+        server.tunnelStatus = "disabled";
+        await writeJSON("servers.json", servers);
+      } catch (err) {
+        console.error("Failed to auto-delete playit tunnel on server stop:", err);
+      }
+    }
+
     res.json({ success: true });
   } catch (err: any) {
     console.error("Stop server error:", err);
@@ -623,9 +656,10 @@ export const saveFileContent = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { filePath, content } = req.body;
 
-  const targetPath = path.join(process.cwd(), ".data", "servers", id, filePath);
+  const baseDir = path.join(process.cwd(), ".data", "servers", id) + path.sep;
+  const targetPath = path.join(baseDir, filePath);
 
-  if (!targetPath.startsWith(path.join(process.cwd(), ".data", "servers", id))) {
+  if (!targetPath.startsWith(baseDir)) {
     return res.status(403).json({ error: "Invalid path" });
   }
 
@@ -993,9 +1027,10 @@ export const downloadFileFromUrl = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Missing url or filePath" });
   }
 
-  const targetPath = path.join(process.cwd(), ".data", "servers", id, filePath);
+  const baseDir = path.join(process.cwd(), ".data", "servers", id) + path.sep;
+  const targetPath = path.join(baseDir, filePath);
 
-  if (!targetPath.startsWith(path.join(process.cwd(), ".data", "servers", id))) {
+  if (!targetPath.startsWith(baseDir)) {
     return res.status(403).json({ error: "Invalid path" });
   }
 
@@ -1090,4 +1125,64 @@ export const deleteSchedule = async (req: Request, res: Response) => {
   const filtered = schedules.filter((sch: any) => sch.id !== scheduleId);
   await writeJSON("schedules.json", filtered);
   res.json({ success: true });
+};
+
+export const getPlayitApiConfig = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const servers = await readJSON("servers.json") || [];
+  const server = servers.find((s: any) => s.id === id);
+  if (!server) {
+    return res.status(404).json({ error: "Server not found" });
+  }
+
+  res.json({
+    playitEnabled: !!server.playitEnabled,
+    publicAddress: server.publicAddress || "",
+    tunnelStatus: server.tunnelStatus || "disabled",
+    playitTunnelId: server.playitTunnelId || ""
+  });
+};
+
+export const togglePlayitApi = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { enabled } = req.body;
+  const servers = await readJSON("servers.json") || [];
+  const server = servers.find((s: any) => s.id === id);
+  if (!server) {
+    return res.status(404).json({ error: "Server not found" });
+  }
+
+  try {
+    server.playitEnabled = !!enabled;
+
+    if (enabled) {
+      server.tunnelStatus = "pending";
+      await writeJSON("servers.json", servers);
+
+      // Create the tunnel
+      const result = await createPlayitTunnel(server.id, server.name, server.port);
+      server.playitTunnelId = result.id;
+      server.publicAddress = result.publicAddress;
+      server.tunnelStatus = result.status;
+    } else {
+      if (server.playitTunnelId) {
+        await deletePlayitTunnel(server.playitTunnelId);
+      }
+      server.playitTunnelId = undefined;
+      server.publicAddress = "";
+      server.tunnelStatus = "disabled";
+    }
+
+    await writeJSON("servers.json", servers);
+    res.json({
+      success: true,
+      playitEnabled: server.playitEnabled,
+      publicAddress: server.publicAddress,
+      tunnelStatus: server.tunnelStatus
+    });
+  } catch (err: any) {
+    server.tunnelStatus = "error";
+    await writeJSON("servers.json", servers);
+    res.status(500).json({ error: err.message || "Failed to toggle playit tunnel" });
+  }
 };

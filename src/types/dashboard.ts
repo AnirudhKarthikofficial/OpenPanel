@@ -14,6 +14,9 @@ export interface ServerSummary {
   memory?: number;
   cpu?: number;
   disk?: number;
+  publicAddress?: string;
+  tunnelStatus?: "active" | "pending" | "error" | "disabled";
+  playitEnabled?: boolean;
 }
 
 export interface SystemStats {

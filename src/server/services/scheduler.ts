@@ -1,6 +1,6 @@
 import { readJSON, writeJSON } from "./db.js";
 import { startContainer, stopContainer, restartContainer } from "./docker.js";
-import { ZipArchive } from "archiver";
+import archiver from "archiver";
 import fs from "fs-extra";
 import path from "path";
 
@@ -36,7 +36,7 @@ async function performBackup(serverId: string): Promise<void> {
   }
 
   const output = fs.createWriteStream(backupPath);
-  const archive = new ZipArchive({ zlib: { level: 9 } });
+  const archive = archiver("zip", { zlib: { level: 9 } });
 
   return new Promise<void>((resolve, reject) => {
     output.on("close", () => resolve());

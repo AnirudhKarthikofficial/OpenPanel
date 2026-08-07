@@ -169,6 +169,23 @@ router.put("/users/:id/password", async (req, res) => {
   res.json({ success: true });
 });
 
+router.get("/settings/playit-key", async (req, res) => {
+  const user = (req as any).user;
+  if(user.role !== "admin" && user.role !== "owner") return res.status(403).json({ error: "Forbidden"});
+  const settings = await readJSON("settings.json") || {};
+  res.json({ playitSecretKey: settings.playitSecretKey || "" });
+});
+
+router.post("/settings/playit-key", async (req, res) => {
+  const user = (req as any).user;
+  if(user.role !== "admin" && user.role !== "owner") return res.status(403).json({ error: "Forbidden"});
+  const { playitSecretKey } = req.body;
+  const settings = await readJSON("settings.json") || {};
+  settings.playitSecretKey = playitSecretKey || "";
+  await writeJSON("settings.json", settings);
+  res.json({ success: true });
+});
+
 router.put("/settings", async (req, res) => {
   const user = (req as any).user;
   if(user.role !== "admin" && user.role !== "owner") return res.status(403).json({ error: "Forbidden"});
@@ -176,7 +193,8 @@ router.put("/settings", async (req, res) => {
     panelName, panelLogo, panelBackgroundImage, panelBackgroundBlur, 
     enablePlayit, enableTutorial, enableLoginAnimation, enableRegistration, theme,
     enableGoogleLogin, firebaseApiKey, firebaseAuthDomain, firebaseProjectId,
-    firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId 
+    firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId,
+    playitSecretKey
   } = req.body;
   const settings = await readJSON("settings.json") || {};
   if (panelName !== undefined) {
@@ -216,6 +234,7 @@ router.put("/settings", async (req, res) => {
   if (firebaseStorageBucket !== undefined) settings.firebaseStorageBucket = firebaseStorageBucket;
   if (firebaseMessagingSenderId !== undefined) settings.firebaseMessagingSenderId = firebaseMessagingSenderId;
   if (firebaseAppId !== undefined) settings.firebaseAppId = firebaseAppId;
+  if (playitSecretKey !== undefined) settings.playitSecretKey = playitSecretKey;
   await writeJSON("settings.json", settings);
   req.app.get("io")?.emit("settings_updated");
   res.json({ success: true });
