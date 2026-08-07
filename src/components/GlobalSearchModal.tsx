@@ -203,6 +203,7 @@ export default function GlobalSearchModal() {
         onClick={() => setIsOpen(true)}
         className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
         title="Search"
+        aria-label="Open search dialog"
       >
         <Search size={20} />
       </button>
@@ -234,6 +235,8 @@ export default function GlobalSearchModal() {
                 <button 
                   onClick={() => setQuery("")}
                   className="p-1 text-muted-foreground hover:text-foreground rounded-md mr-1"
+                  aria-label="Clear search query"
+                  title="Clear search query"
                 >
                   <X size={16} />
                 </button>
