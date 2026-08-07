@@ -76,6 +76,11 @@ export default function SettingsPage(): React.ReactElement {
   const [newEnableRegistration, setNewEnableRegistration] = useState(enableRegistration);
   const [newTheme, setNewTheme] = useState(theme);
 
+  // Playit Secret Key State
+  const [playitKey, setPlayitKey] = useState<string>("");
+  const [isSavingPlayitKey, setIsSavingPlayitKey] = useState(false);
+  const [showPlayitKey, setShowPlayitKey] = useState(false);
+
   // Firebase Config Local State
   const [fbEnableGoogleLogin, setFbEnableGoogleLogin] = useState<boolean>(enableGoogleLogin || false);
   const [fbApiKey, setFbApiKey] = useState<string>(firebaseApiKey || "");
@@ -189,8 +194,17 @@ export default function SettingsPage(): React.ReactElement {
     } catch (e) {}
   };
 
+  const fetchPlayitKey = async () => {
+    if (user.role !== "admin") return;
+    try {
+      const res = await axios.get("/api/system/settings/playit-key");
+      setPlayitKey(res.data.playitSecretKey || "");
+    } catch (e) {}
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchPlayitKey();
     if (panelBackgroundBlur !== undefined) setTempBgBlur(panelBackgroundBlur);
   }, [user]);
 
@@ -294,6 +308,72 @@ export default function SettingsPage(): React.ReactElement {
 
   
 
+
+  const handleSavePlayitKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingPlayitKey(true);
+    try {
+      await axios.post("/api/system/settings/playit-key", { playitSecretKey: playitKey });
+      alert("Playit.gg secret key saved successfully.");
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to save playit.gg secret key.");
+    } finally {
+      setIsSavingPlayitKey(false);
+    }
+  };
+
+  const renderPlayitSettings = () => (
+    <>
+      {user.role === "admin" && (
+        <div className="bg-card border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10 border-b border-border-subtle pb-6">
+            <div>
+              <h2 className="text-xl font-bold flex items-center text-foreground">
+                <Globe className="mr-3 text-indigo-400 w-6 h-6" /> Playit.gg Integration
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Configure your Playit.gg secret/agent key to enable automated public tunnels.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSavePlayitKey} className="space-y-4 relative z-10">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                Playit Secret/Agent Key
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type={showPlayitKey ? "text" : "password"}
+                  placeholder="AgentKey ..."
+                  value={playitKey}
+                  onChange={(e: any) => setPlayitKey(e.target.value)}
+                  className="flex-1 bg-muted border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-sm text-foreground font-mono transition-all shadow-inner outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPlayitKey(!showPlayitKey)}
+                  className="bg-muted hover:bg-muted/80 border border-border text-foreground font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm text-sm"
+                >
+                  {showPlayitKey ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={isSavingPlayitKey}
+                className="bg-indigo-500 hover:bg-indigo-600 text-foreground font-bold px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
+              >
+                {isSavingPlayitKey ? "Saving Key..." : "Save Secret Key"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </>
+  );
 
   const renderGoogleFirebase = () => (
     <>
@@ -786,6 +866,7 @@ export default function SettingsPage(): React.ReactElement {
       )}
 
       {renderGoogleFirebase()}
+      {renderPlayitSettings()}
       {user.role === "admin" && (
         <div className="bg-card/80 backdrop-blur-xl border border-border-subtle rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
           <h2 className="text-xl font-bold mb-6 flex items-center text-foreground relative z-10">

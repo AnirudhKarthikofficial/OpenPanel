@@ -9,6 +9,7 @@ import analyticsRoutes from "./analytics.js";
 import nodeRoutes from "./nodes.js";
 import apiKeyRoutes from "./api-keys.js";
 
+router.use("/auth", authRoutes);
 router.use("/analytics", analyticsRoutes);
 router.use("/servers", serverRoutes);
 router.use("/system", systemRoutes);

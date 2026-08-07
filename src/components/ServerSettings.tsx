@@ -14,6 +14,12 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
   const [ipAlias, setIpAlias] = useState(server?.ipAlias || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingAlias, setIsSavingAlias] = useState(false);
+
+  const [playitEnabled, setPlayitEnabled] = useState(false);
+  const [publicAddress, setPublicAddress] = useState("");
+  const [tunnelStatus, setTunnelStatus] = useState("disabled");
+  const [isTogglingPlayit, setIsTogglingPlayit] = useState(false);
+  const [isCopiedPlayit, setIsCopiedPlayit] = useState(false);
   
   const [versions, setVersions] = useState<string[]>([]);
   const [selectedVersion, setSelectedVersion] = useState(server?.version || "");
@@ -26,7 +32,17 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  const fetchPlayitConfig = async () => {
+    try {
+      const res = await axios.get(`/api/servers/${serverId}/playit-api`);
+      setPlayitEnabled(!!res.data.playitEnabled);
+      setPublicAddress(res.data.publicAddress || "");
+      setTunnelStatus(res.data.tunnelStatus || "disabled");
+    } catch (e) {}
+  };
+
   useEffect(() => {
+    fetchPlayitConfig();
     // Fetch software versions
     axios.get(`/api/system/versions?type=${selectedType}`).then((res) => {
       if (Array.isArray(res.data)) {
@@ -127,6 +143,28 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
     } finally {
       setIsSavingAlias(false);
     }
+  };
+
+  const handleTogglePlayit = async () => {
+    setIsTogglingPlayit(true);
+    try {
+      const targetState = !playitEnabled;
+      const res = await axios.post(`/api/servers/${serverId}/playit-api/toggle`, { enabled: targetState });
+      setPlayitEnabled(!!res.data.playitEnabled);
+      setPublicAddress(res.data.publicAddress || "");
+      setTunnelStatus(res.data.tunnelStatus || "disabled");
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to toggle Playit.gg Cloud Tunnel.");
+    } finally {
+      setIsTogglingPlayit(false);
+    }
+  };
+
+  const handleCopyPlayitAddress = () => {
+    if (!publicAddress) return;
+    navigator.clipboard.writeText(publicAddress);
+    setIsCopiedPlayit(true);
+    setTimeout(() => setIsCopiedPlayit(false), 2000);
   };
 
   return (
@@ -240,6 +278,65 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
             </div>
 
             <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle relative z-20 group hover:bg-black/60 transition-colors mb-8">
+              <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-4">
+                <div>
+                  <h3 className="text-indigo-400 font-bold flex items-center">
+                    <Globe className="w-5 h-5 mr-2" /> Playit.gg Cloud Tunnel
+                  </h3>
+                  <p className="text-muted-foreground text-xs mt-1">
+                    Expose your server globally via Playit.gg automatic cloud tunnels.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={playitEnabled}
+                    onChange={handleTogglePlayit}
+                    disabled={isTogglingPlayit}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                </label>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-muted-foreground">Tunnel Status:</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider ${
+                    tunnelStatus === "active" ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" :
+                    tunnelStatus === "pending" ? "bg-amber-500/15 text-amber-400 border border-amber-500/30" :
+                    tunnelStatus === "error" ? "bg-red-500/15 text-red-400 border border-red-500/30" :
+                    "bg-zinc-500/15 text-zinc-400 border border-zinc-500/30"
+                  }`}>
+                    {tunnelStatus}
+                  </span>
+                </div>
+
+                {playitEnabled && publicAddress && (
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                      Public Address
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={publicAddress}
+                        className="flex-1 bg-muted border border-border rounded-xl px-4 py-2 text-sm text-foreground font-mono outline-none"
+                      />
+                      <button
+                        onClick={handleCopyPlayitAddress}
+                        className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 font-semibold px-4 py-2 rounded-xl text-sm transition-all"
+                      >
+                        {isCopiedPlayit ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-black/40 dark:bg-black/40 backdrop-blur-xl border border-border p-6 md:p-8 rounded-3xl shadow-[0_0_40px_-15px_rgba(0,0,0,0.5)] ring-1 ring-border-subtle relative z-20 group hover:bg-black/60 transition-colors mb-8">
               <h3 className="text-indigo-400 font-bold mb-2 flex items-center">
                 <Globe className="w-5 h-5 mr-2" /> Server IP Alias
               </h3>
@@ -305,7 +402,7 @@ export default function ServerSettings({ serverId, server }: { serverId: string,
            </div>
         )}
       </div>
-          {(isDeletingAction || isSaving || isSavingAlias || isChangingVersion || isRestarting) && <LoadingOverlay />}
+          {(isDeletingAction || isSaving || isSavingAlias || isChangingVersion || isRestarting || isTogglingPlayit) && <LoadingOverlay />}
     </div>
     </>
   );
