@@ -54,10 +54,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Top Header */}
         <header className="h-16 flex items-center justify-between px-4 sm:px-6 bg-card/80 backdrop-blur-xl border-b border-border-subtle relative z-10 flex-shrink-0">
           <div className="flex items-center gap-4">
-            <button onClick={() => setMobileOpen(true)} className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+              aria-label="Open navigation menu"
+              title="Open navigation menu"
+            >
               <Menu size={20} />
             </button>
-            <button onClick={() => setIsCollapsed(!isCollapsed)} className="hidden md:flex p-2 -ml-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="hidden md:flex p-2 -ml-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
               <Menu size={20} />
             </button>
             <div className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground">

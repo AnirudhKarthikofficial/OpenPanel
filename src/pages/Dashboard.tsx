@@ -177,12 +177,16 @@ export default function Dashboard() {
               <button 
                 onClick={() => setView('grid')}
                 className={`p-2 rounded-lg transition-all ${view === 'grid' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                aria-label="Grid view"
+                title="Grid view"
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button 
                 onClick={() => setView('list')}
                 className={`p-2 rounded-lg transition-all ${view === 'list' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                aria-label="List view"
+                title="List view"
               >
                 <List className="h-4 w-4" />
               </button>

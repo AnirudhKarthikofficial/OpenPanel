@@ -28,7 +28,12 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
       {/* Header */}
       <div className={`h-16 flex items-center border-b border-border-subtle ${isCollapsed ? 'justify-center' : 'px-6'} flex-shrink-0 relative`}>
         {onClose && (
-          <button onClick={onClose} className="md:hidden flex items-center justify-center absolute top-5 right-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+          <button
+            onClick={onClose}
+            className="md:hidden flex items-center justify-center absolute top-5 right-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+            aria-label="Close navigation menu"
+            title="Close navigation menu"
+          >
             <X size={20} />
           </button>
         )}
@@ -93,7 +98,12 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
       {/* User Profile */}
       <div className="w-full p-4 border-t border-border-subtle mt-auto bg-transparent">
         {isCollapsed ? (
-          <button onClick={logout} title="Logout" className="flex items-center justify-center w-full p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors">
+          <button
+            onClick={logout}
+            title="Logout"
+            aria-label="Logout"
+            className="flex items-center justify-center w-full p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
+          >
             <LogOut size={20} />
           </button>
         ) : (
@@ -107,7 +117,12 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
                 <p className="text-xs text-muted-foreground capitalize truncate">{user?.role || "Admin"}</p>
               </div>
             </div>
-            <button onClick={logout} className="p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors flex-shrink-0">
+            <button
+              onClick={logout}
+              className="p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors flex-shrink-0"
+              title="Logout"
+              aria-label="Logout"
+            >
               <LogOut size={18} />
             </button>
           </div>
