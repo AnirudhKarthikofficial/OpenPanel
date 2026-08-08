@@ -155,6 +155,23 @@ export default function FileManager({ serverId }: { serverId: string }) {
     }
   };
 
+  // Keyboard shortcut for saving (Ctrl+S or Cmd+S)
+  useEffect(() => {
+    if (!editingFile) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!isSaving) {
+          saveFile();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingFile, isSaving, saveFile]);
+
   // --- Actions ---
 
   // 1. Download File or Folder
@@ -587,7 +604,9 @@ export default function FileManager({ serverId }: { serverId: string }) {
             <button 
               disabled={isSaving} 
               onClick={saveFile} 
-              className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
+              title="Save Changes (Ctrl+S / ⌘S)"
+              aria-label="Save Changes (Ctrl+S / ⌘S)"
+              className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? <div className="w-4 h-4 rounded-full border-2 border-white/50 border-t-white animate-spin" /> : <Save size={16} />}
               <span>{isSaving ? "Saving..." : "Save Changes"}</span>
