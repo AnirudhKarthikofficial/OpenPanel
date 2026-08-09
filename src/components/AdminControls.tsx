@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserPlus, Shield, Trash2, Key } from 'lucide-react';
 
 interface AdminControlsProps {
@@ -38,6 +38,8 @@ export default function AdminControls({
   changeUserPassword,
   deleteUser
 }: AdminControlsProps) {
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+
   return (
     <div className="bg-card border border-border-subtle rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden mt-8">
       <h2 className="text-xl font-bold mb-6 flex items-center text-foreground relative z-10">
@@ -104,24 +106,65 @@ export default function AdminControls({
                     <td className="px-4 py-3 text-muted-foreground capitalize">{u.role}</td>
                     <td className="px-4 py-3 text-right">
                       {editingUserId === u.id ? (
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2 animate-in fade-in duration-150">
                           <input 
                             type="password" 
                             placeholder="New Pass" 
                             value={adminUserNewPassword} 
                             onChange={(e: any) => setAdminUserNewPassword(e.target.value)}
-                            className="bg-black/40 border border-border focus:border-indigo-500 rounded-lg px-2 py-1 text-xs w-28 text-foreground outline-none"
+                            className="bg-black/40 border border-border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-lg px-2 py-1 text-xs w-28 text-foreground outline-none"
+                            aria-label={`New password for user ${u.username}`}
                           />
-                          <button onClick={() => changeUserPassword(u.id)} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2 py-1.5 rounded-lg transition-all">Save</button>
-                          <button onClick={() => setEditingUserId(null)} className="bg-muted hover:bg-muted-hover text-foreground-muted text-xs px-2 py-1.5 rounded-lg border border-border transition-all">Cancel</button>
+                          <button
+                            onClick={() => changeUserPassword(u.id)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2 py-1.5 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+                            aria-label={`Save password change for user ${u.username}`}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingUserId(null)}
+                            className="bg-muted hover:bg-muted-hover text-foreground-muted text-xs px-2 py-1.5 rounded-lg border border-border transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+                            aria-label="Cancel changing password"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : deletingUserId === u.id ? (
+                        <div className="flex items-center justify-end gap-2 animate-in fade-in slide-in-from-right-1 duration-150">
+                          <span className="text-xs text-red-400 font-medium mr-1 select-none">Delete user?</span>
+                          <button
+                            onClick={() => { deleteUser(u.id); setDeletingUserId(null); }}
+                            className="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1.5 rounded-lg transition-all font-semibold shadow-md active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500 outline-none"
+                            aria-label={`Confirm deletion of user ${u.username}`}
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setDeletingUserId(null)}
+                            className="bg-muted hover:bg-muted-hover text-muted-foreground hover:text-foreground text-xs px-2.5 py-1.5 rounded-lg border border-border transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+                            aria-label="Cancel deletion"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => setEditingUserId(u.id)} className="p-1.5 text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors" title="Change Password">
+                          <button
+                            onClick={() => { setEditingUserId(u.id); setDeletingUserId(null); }}
+                            className="p-1.5 text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+                            title="Change Password"
+                            aria-label={`Change password for user ${u.username}`}
+                          >
                             <Key size={16} />
                           </button>
                           {u.username !== "admin" && (
-                            <button onClick={() => { if(confirm("Are you sure you want to delete this user?")) deleteUser(u.id); }} className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete User">
+                            <button
+                              onClick={() => { setDeletingUserId(u.id); setEditingUserId(null); }}
+                              className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-red-500 outline-none"
+                              title="Delete User"
+                              aria-label={`Delete user ${u.username}`}
+                            >
                               <Trash2 size={16} />
                             </button>
                           )}
