@@ -20,15 +20,16 @@ print_banner() {
     clear
     echo -e "${CYAN}${BOLD}"
     echo "  ========================================================"
-    echo "   _____ _____ _____   _____                  _           "
-    echo "  |_   _|_   _/ ____| |  __ \                | |          "
-    echo "    | |   | | | |  __ | |__) |__ _ n  ___| |          "
-    echo "    | |   | | | | |_ ||  ___/ _ \ ' \/ _ \ |          "
-    echo "   _| |_  | | | |__| || |  |  __/ | | |  __/ |          "
-    echo "  |_____| |_|  \____||_|   \___|_| |_|\___|_|          "
+    echo "   ____                   ____                  _          "
+    echo "  / __ \____  ___  ____  / __ \____  ____ ___ | |         "
+    echo " / / / / __ \/ _ \/ __ \/ /_/ / __ \/ __ \`__ \| |         "
+    echo "/ /_/ / /_/ /  __/ / / / ____/ /_/ / / / / / / |         "
+    echo "\____/ .___/\___/_/ /_/_/    \____/_/ /_/ /_/|_|         "
+    echo "    /_/                                                   "
     echo "                                                          "
-    echo "            Open PANEL MANAGEMENT & INSTALLER              "
-    echo "            Main Panel Default Port: 6767                 "
+    echo "             O P E N P A N E L                            "
+    echo "            PANEL MANAGEMENT & INSTALLER                 "
+    echo "            Main Panel Default Port: 6767               "
     echo "  ========================================================"
     echo -e "${NC}"
 }
@@ -160,7 +161,7 @@ install_panel() {
         WORK_DIR="Jtg"
     else
         log_info "Cloning from GitHub..."
-        git clone https://github.com/JishnuTheGamer/Jtg
+        git clone https://github.com/AnirudhKarthikofficial/OpenPanel
         WORK_DIR="Jtg"
     fi
     
