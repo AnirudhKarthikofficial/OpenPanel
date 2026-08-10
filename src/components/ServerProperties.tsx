@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react"; 
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import axios from "axios";
-import { Save, AlertTriangle, RefreshCw } from "lucide-react";
+import { Save, AlertTriangle, RefreshCw, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Properties {
   [key: string]: string;
+}
+
+interface Toast {
+  message: string;
+  type: "success" | "error";
 }
 
 const COMMON_PROPERTIES = [
@@ -26,6 +32,27 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
   const [exists, setExists] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const toastTimeoutRef = React.useRef<any>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToast({ message, type });
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimeoutRef.current = null;
+    }, 3500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const loadProperties = async () => {
     try {
@@ -101,13 +128,30 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
         content: newContent
       });
       setOriginalContent(newContent);
-      alert('Properties saved successfully! You may need to restart the server for changes to take effect.');
+      showToast('Properties saved successfully! Restart the server to apply changes.', 'success');
     } catch (e) {
-      alert('Failed to save properties.');
+      showToast('Failed to save properties.', 'error');
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Keyboard shortcut listener for Ctrl+S or Cmd+S
+  useEffect(() => {
+    if (!exists || loading) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!isSaving) {
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [exists, loading, isSaving, properties, originalContent]);
 
   const handleChange = (key: string, value: string) => {
     setProperties(prev => ({ ...prev, [key]: value }));
@@ -134,7 +178,26 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 relative">
+      {/* Toast Banner */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl border text-sm font-semibold backdrop-blur-xl ${
+              toast.type === "success"
+                ? "bg-emerald-950/90 border-emerald-500/30 text-emerald-300"
+                : "bg-red-950/90 border-red-500/30 text-red-300"
+            }`}
+          >
+            {toast.type === "success" ? <Check size={18} /> : <AlertTriangle size={18} />}
+            <span>{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -144,7 +207,9 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-foreground font-bold rounded-xl transition-all flex items-center disabled:opacity-50 shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] ring-1 ring-border"
+            title="Save Changes (Ctrl+S / ⌘S)"
+            aria-label="Save Changes (Ctrl+S / ⌘S)"
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 text-foreground font-bold rounded-xl transition-all flex items-center disabled:opacity-50 shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] ring-1 ring-border cursor-pointer"
           >
             <Save className="w-4 h-4 mr-2" />
             {isSaving ? 'Saving...' : 'Save Changes'}
