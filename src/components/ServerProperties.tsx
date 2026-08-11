@@ -158,6 +158,9 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
                 <label className="text-xs font-bold text-indigo-300 uppercase tracking-widest drop-shadow-sm mb-2 block">{prop.label}</label>
                 {prop.type === 'boolean' && (
                   <button
+                    role="switch"
+                    aria-checked={properties[prop.key] === 'true'}
+                    aria-label={prop.label}
                     onClick={() => handleChange(prop.key, properties[prop.key] === 'true' ? 'false' : 'true')}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
                         properties[prop.key] === 'true' ? 'bg-indigo-500' : 'bg-zinc-700'
