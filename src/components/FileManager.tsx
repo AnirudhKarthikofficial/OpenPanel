@@ -24,6 +24,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
   const [path, setPath] = useState("/");
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState("");
+  const [originalFileContent, setOriginalFileContent] = useState("");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -92,8 +93,16 @@ export default function FileManager({ serverId }: { serverId: string }) {
     setOpenMenuRow(null);
   }, [path, serverId]);
 
+  const confirmDiscard = () => {
+    if (editingFile && fileContent !== originalFileContent) {
+      return confirm("You have unsaved changes. Are you sure you want to discard them?");
+    }
+    return true;
+  };
+
   const goUp = () => {
     if (editingFile) {
+      if (!confirmDiscard()) return;
       setEditingFile(null);
       return;
     }
@@ -104,7 +113,10 @@ export default function FileManager({ serverId }: { serverId: string }) {
   };
 
   const navigateToSegment = (index: number) => {
-    if (editingFile) setEditingFile(null);
+    if (editingFile) {
+      if (!confirmDiscard()) return;
+      setEditingFile(null);
+    }
     const parts = path.split("/").filter(Boolean);
     if (index === -1) {
       setPath("/");
@@ -130,6 +142,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
       if (res.data.isFile) {
         setEditingFile(name);
         setFileContent(res.data.content);
+        setOriginalFileContent(res.data.content);
       }
     } catch (e) {
       showToast("Failed to load file contents", "error");
@@ -148,6 +161,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
         content: fileContent
       });
       showToast(`Saved ${editingFile} successfully`, "success");
+      setOriginalFileContent(fileContent);
     } catch (e) {
       showToast("Failed to save file", "error");
     } finally {
@@ -171,6 +185,22 @@ export default function FileManager({ serverId }: { serverId: string }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editingFile, isSaving, saveFile]);
+
+  // Prevent accidental page close/reload when there are unsaved changes
+  useEffect(() => {
+    if (!editingFile) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (fileContent !== originalFileContent) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Are you sure you want to discard them?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [editingFile, fileContent, originalFileContent]);
 
   // --- Actions ---
 
@@ -601,16 +631,31 @@ export default function FileManager({ serverId }: { serverId: string }) {
               )}
             </>
           ) : (
-            <button 
-              disabled={isSaving} 
-              onClick={saveFile} 
-              title="Save Changes (Ctrl+S / ⌘S)"
-              aria-label="Save Changes (Ctrl+S / ⌘S)"
-              className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
-            >
-              {isSaving ? <div className="w-4 h-4 rounded-full border-2 border-white/50 border-t-white animate-spin" /> : <Save size={16} />}
-              <span>{isSaving ? "Saving..." : "Save Changes"}</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  if (confirmDiscard()) {
+                    setEditingFile(null);
+                  }
+                }}
+                aria-label="Close file editor"
+                title="Close file editor"
+                className="flex items-center space-x-1.5 px-3 py-2 bg-muted/80 hover:bg-muted rounded-xl text-xs font-semibold text-foreground hover:text-red-400 border border-border hover:border-red-500/30 transition-all cursor-pointer"
+              >
+                <X size={15} />
+                <span>Close</span>
+              </button>
+              <button
+                disabled={isSaving}
+                onClick={saveFile}
+                title="Save Changes (Ctrl+S / ⌘S)"
+                aria-label="Save Changes (Ctrl+S / ⌘S)"
+                className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer"
+              >
+                {isSaving ? <div className="w-4 h-4 rounded-full border-2 border-white/50 border-t-white animate-spin" /> : <Save size={16} />}
+                <span>{isSaving ? "Saving..." : "Save Changes"}</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
