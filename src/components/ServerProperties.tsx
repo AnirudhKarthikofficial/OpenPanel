@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react"; 
 import { LoadingOverlay } from "../components/LoadingOverlay";
 import axios from "axios";
-import { Save, AlertTriangle, RefreshCw } from "lucide-react";
+import { Save, AlertTriangle, RefreshCw, Check, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Properties {
   [key: string]: string;
+}
+
+interface Toast {
+  message: string;
+  type: "success" | "error";
 }
 
 const COMMON_PROPERTIES = [
@@ -26,6 +32,14 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
   const [exists, setExists] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<Toast | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
 
   const loadProperties = async () => {
     try {
@@ -101,9 +115,9 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
         content: newContent
       });
       setOriginalContent(newContent);
-      alert('Properties saved successfully! You may need to restart the server for changes to take effect.');
+      showToast('Properties saved successfully! Restart the server to apply changes.', 'success');
     } catch (e) {
-      alert('Failed to save properties.');
+      showToast('Failed to save properties.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -134,7 +148,35 @@ export default function ServerProperties({ serverId }: { serverId: string }) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 relative">
+      {/* Toast Banner */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            role="status"
+            aria-live="polite"
+            className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl border text-sm font-semibold backdrop-blur-xl ${
+              toast.type === "success"
+                ? "bg-emerald-950/90 border-emerald-500/30 text-emerald-300"
+                : "bg-red-950/90 border-red-500/30 text-red-300"
+            }`}
+          >
+            {toast.type === "success" ? <Check size={18} /> : <AlertTriangle size={18} />}
+            <span>{toast.message}</span>
+            <button
+              onClick={() => setToast(null)}
+              aria-label="Dismiss notification"
+              className="ml-2 p-1 rounded-lg hover:bg-white/10 transition-colors text-current/60 hover:text-current"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
