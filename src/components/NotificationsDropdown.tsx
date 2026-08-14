@@ -134,7 +134,9 @@ export default function NotificationsDropdown() {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
+        aria-expanded={isOpen}
+        title="Notifications"
         className={`p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all relative ${
           isOpen ? "bg-muted text-foreground" : ""
         }`}
@@ -175,6 +177,7 @@ export default function NotificationsDropdown() {
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
+                  aria-label="Clear all notifications"
                   className="text-xs text-muted-foreground hover:text-rose-400 transition-colors p-1 rounded-md hover:bg-muted"
                   title="Clear all notifications"
                 >
@@ -255,6 +258,7 @@ export default function NotificationsDropdown() {
                   {/* Close/delete button */}
                   <button
                     onClick={(e) => deleteNotification(notif.id, e)}
+                    aria-label={`Dismiss notification: ${notif.title}`}
                     className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Dismiss"
                   >

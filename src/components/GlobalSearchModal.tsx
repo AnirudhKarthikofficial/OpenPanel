@@ -201,8 +201,9 @@ export default function GlobalSearchModal() {
       {/* Mobile Search Icon Button */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+        aria-label="Open search dialog"
         title="Search"
+        className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
       >
         <Search size={20} />
       </button>
@@ -233,6 +234,8 @@ export default function GlobalSearchModal() {
               {query && (
                 <button 
                   onClick={() => setQuery("")}
+                  aria-label="Clear search query"
+                  title="Clear search query"
                   className="p-1 text-muted-foreground hover:text-foreground rounded-md mr-1"
                 >
                   <X size={16} />
@@ -240,6 +243,8 @@ export default function GlobalSearchModal() {
               )}
               <button 
                 onClick={() => setIsOpen(false)}
+                aria-label="Close search dialog"
+                title="Close (ESC)"
                 className="p-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
               >
                 ESC
