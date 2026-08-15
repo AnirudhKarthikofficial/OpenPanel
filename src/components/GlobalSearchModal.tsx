@@ -182,26 +182,31 @@ export default function GlobalSearchModal() {
   return (
     <>
       {/* Header Search Trigger Bar */}
-      <div 
+      <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="relative hidden md:flex items-center w-64 group cursor-pointer"
+        aria-label="Search panel (Ctrl+K)"
+        className="relative hidden md:flex items-center w-64 group cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 rounded-xl"
       >
-        <Search className="absolute left-3 w-4 h-4 text-muted-foreground group-hover:text-indigo-400 transition-colors pointer-events-none" />
+        <Search className="absolute left-3 w-4 h-4 text-muted-foreground group-hover:text-indigo-400 transition-colors pointer-events-none z-10" />
         <input 
           type="text" 
           readOnly
+          tabIndex={-1}
           placeholder="Search... (Ctrl+K)" 
-          className="w-full bg-muted/80 border border-border-subtle hover:border-indigo-500/50 rounded-xl pl-9 pr-12 py-1.5 text-xs text-foreground cursor-pointer outline-none transition-all shadow-sm"
+          className="w-full bg-muted/80 border border-border-subtle group-hover:border-indigo-500/50 rounded-xl pl-9 pr-12 py-1.5 text-xs text-foreground cursor-pointer outline-none transition-all shadow-sm pointer-events-none"
         />
         <div className="absolute right-2.5 flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-card border border-border-subtle rounded-md shadow-xs pointer-events-none">
           <span className="text-[9px]">⌘</span>K
         </div>
-      </div>
+      </button>
 
       {/* Mobile Search Icon Button */}
       <button 
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+        aria-label="Search panel"
+        className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
         title="Search"
       >
         <Search size={20} />
@@ -209,10 +214,16 @@ export default function GlobalSearchModal() {
 
       {/* Full Modal Command Palette Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Global Search"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150"
+        >
           <div 
             className="fixed inset-0" 
             onClick={() => setIsOpen(false)} 
+            aria-hidden="true"
           />
 
           <div className="relative w-full max-w-2xl bg-card/95 border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150">
