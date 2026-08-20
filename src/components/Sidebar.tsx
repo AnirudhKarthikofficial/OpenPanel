@@ -28,7 +28,11 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
       {/* Header */}
       <div className={`h-16 flex items-center border-b border-border-subtle ${isCollapsed ? 'justify-center' : 'px-6'} flex-shrink-0 relative`}>
         {onClose && (
-          <button onClick={onClose} className="md:hidden flex items-center justify-center absolute top-5 right-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+          <button
+            onClick={onClose}
+            aria-label="Close sidebar"
+            className="md:hidden flex items-center justify-center absolute top-5 right-4 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
             <X size={20} />
           </button>
         )}
@@ -107,7 +111,12 @@ export function Sidebar({ onClose, isCollapsed, toggleCollapse }: { onClose?: ()
                 <p className="text-xs text-muted-foreground capitalize truncate">{user?.role || "Admin"}</p>
               </div>
             </div>
-            <button onClick={logout} className="p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors flex-shrink-0">
+            <button
+              onClick={logout}
+              aria-label="Log out"
+              title="Log out"
+              className="p-2 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
               <LogOut size={18} />
             </button>
           </div>
