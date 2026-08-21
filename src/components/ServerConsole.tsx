@@ -889,6 +889,57 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
                 </div>
               </header>
 
+              {/* ── Sub-header / Filter & Actions Toolbar ── */}
+              <div className="px-3 sm:px-5 py-1.5 flex items-center justify-between gap-2 border-b border-border-subtle bg-black/30 backdrop-blur-md relative z-10 text-xs">
+                {/* Filter Pills */}
+                <div className="flex items-center gap-1 overflow-x-auto qx-scroll py-0.5">
+                  {FILTERS.map((f) => {
+                    const count = counts[f.key];
+                    const isActive = filter === f.key;
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => setFilter(f.key)}
+                        aria-label={`Filter logs by ${f.label} (${count} lines)`}
+                        className={`qx-mono text-[10px] px-2 py-0.5 rounded-md transition-all flex items-center gap-1 ${
+                          isActive
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold"
+                            : "text-slate-400 hover:text-slate-200 border border-transparent hover:bg-white/5"
+                        }`}
+                      >
+                        <span>{f.label}</span>
+                        <span className="text-[9px] opacity-60">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Actions: Copy & Clear */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={copyLogs}
+                    title="Copy console output"
+                    aria-label="Copy console output"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 transition-all flex items-center gap-1 text-[11px]"
+                  >
+                    {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                    <span className="hidden sm:inline qx-mono text-[10px]">{copied ? "Copied" : "Copy"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLogs([])}
+                    title="Clear console output"
+                    aria-label="Clear console output"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all flex items-center gap-1 text-[11px]"
+                  >
+                    <Trash2 size={13} />
+                    <span className="hidden sm:inline qx-mono text-[10px]">Clear</span>
+                  </button>
+                </div>
+              </div>
+
               {/* ── Log body ── */}
               <div
                 ref={bodyRef}
