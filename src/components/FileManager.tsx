@@ -470,6 +470,8 @@ export default function FileManager({ serverId }: { serverId: string }) {
       <AnimatePresence>
         {toast && (
           <motion.div
+            role="status"
+            aria-live="polite"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -493,8 +495,9 @@ export default function FileManager({ serverId }: { serverId: string }) {
           <button 
             onClick={goUp} 
             disabled={path === "/" && !editingFile} 
-            className="p-2 bg-muted/80 hover:bg-muted rounded-xl text-foreground disabled:opacity-30 transition-colors shrink-0"
+            className="p-2 bg-muted/80 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl text-foreground disabled:opacity-30 transition-colors shrink-0"
             title="Go Back"
+            aria-label="Go Back"
           >
             <ArrowLeft size={18} />
           </button>
@@ -542,7 +545,11 @@ export default function FileManager({ serverId }: { serverId: string }) {
                 className="w-full bg-background/80 border border-border rounded-xl py-2 pl-9 pr-4 text-xs text-foreground focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md"
+                  aria-label="Clear search"
+                >
                   <X size={14} />
                 </button>
               )}
@@ -592,8 +599,9 @@ export default function FileManager({ serverId }: { serverId: string }) {
                   </button>
                   <button
                     onClick={fetchFiles}
-                    className="p-2 bg-muted/80 hover:bg-muted rounded-xl text-muted-foreground hover:text-foreground border border-border transition-all"
+                    className="p-2 bg-muted/80 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl text-muted-foreground hover:text-foreground border border-border transition-all"
                     title="Refresh Directory"
+                    aria-label="Refresh Directory"
                   >
                     <RefreshCw size={15} className={isLoading ? "animate-spin" : ""} />
                   </button>
@@ -640,7 +648,11 @@ export default function FileManager({ serverId }: { serverId: string }) {
               {/* Table Header */}
               {filteredFiles.length > 0 && (
                 <div className="flex items-center px-4 py-2.5 mb-2 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <button onClick={toggleSelectAll} className="mr-3 transition-colors hover:text-foreground">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="mr-3 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                    aria-label={selectedFiles.size === filteredFiles.length ? "Deselect all files" : "Select all files"}
+                  >
                     {selectedFiles.size === filteredFiles.length ? (
                       <CheckSquare size={18} className="text-indigo-400" />
                     ) : (
@@ -679,7 +691,8 @@ export default function FileManager({ serverId }: { serverId: string }) {
                     <div className="flex items-center space-x-3 flex-1 overflow-hidden">
                       <button 
                         onClick={(e) => toggleSelectFile(f.name, e)} 
-                        className={`transition-colors shrink-0 ${isSelected ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-400'}`}
+                        className={`transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded ${isSelected ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-400'}`}
+                        aria-label={isSelected ? `Deselect ${f.name}` : `Select ${f.name}`}
                       >
                         {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
                       </button>
@@ -716,8 +729,9 @@ export default function FileManager({ serverId }: { serverId: string }) {
                               e.stopPropagation();
                               setOpenMenuRow(isMenuOpen ? null : f.name);
                             }}
-                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg transition-colors"
                             title="More Actions"
+                            aria-label={`More actions for ${f.name}`}
                           >
                             <MoreVertical size={15} />
                           </button>
@@ -872,8 +886,9 @@ export default function FileManager({ serverId }: { serverId: string }) {
 
               <button 
                 onClick={() => setSelectedFiles(new Set())} 
-                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition-all" 
+                className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl transition-all"
                 title="Clear Selection"
+                aria-label="Clear selection"
               >
                 <X size={16} />
               </button>
@@ -902,7 +917,11 @@ export default function FileManager({ serverId }: { serverId: string }) {
                   {activeModal === "zip" && <><Archive size={18} className="text-emerald-400" /> Compress Selected Items</>}
                   {activeModal === "download_url" && <><Download size={18} className="text-emerald-400" /> Download from URL</>}
                 </h3>
-                <button onClick={() => setActiveModal(null)} className="text-muted-foreground hover:text-foreground">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md"
+                  aria-label="Close dialog"
+                >
                   <X size={18} />
                 </button>
               </div>
