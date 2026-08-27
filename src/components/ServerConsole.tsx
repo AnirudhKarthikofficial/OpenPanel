@@ -882,6 +882,28 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={copyLogs}
+                    disabled={logs.length === 0}
+                    aria-label={copied ? "Copied console output" : "Copy console output"}
+                    title={copied ? "Copied!" : "Copy console logs"}
+                    className="p-1.5 text-slate-400 hover:text-emerald-300 hover:bg-emerald-400/10 focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-lg transition-all disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLogs([])}
+                    disabled={logs.length === 0}
+                    aria-label="Clear console output"
+                    title="Clear console output"
+                    className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 focus-visible:ring-2 focus-visible:ring-rose-400 rounded-lg transition-all disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+
                   <span className="hidden sm:block">
                     <Clock />
                   </span>
@@ -962,31 +984,64 @@ export default function ServerConsole({ serverId, server }: ServerConsoleProps) 
                 </button>
               )}
 
-              {/* ── Quick commands ── */}
-              <div className="px-2.5 sm:px-4 py-2 flex items-center gap-1.5 overflow-x-auto qx-scroll relative z-10 border-t border-border-subtle bg-black/20 backdrop-blur-md">
-                <span className="qx-display text-[8px] font-bold uppercase tracking-[0.22em] text-slate-500 shrink-0 mr-0.5 hidden xs:inline">
-                  Quick
-                </span>
-                {QUICK_COMMANDS.map((q) => (
-                  <button
-                    key={q.cmd}
-                    type="button"
-                    onClick={() => {
-                      setCommand(q.cmd);
-                      inputRef.current?.focus();
-                    }}
-                    className={`qx-mono text-[10px] px-2.5 py-1 rounded-lg border whitespace-nowrap transition-all duration-200 shrink-0 ${
-                      q.danger
-                        ? "text-rose-400/90 border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20"
-                        : "text-slate-300 border-border/80 bg-muted/60 hover:border-emerald-400/40 hover:bg-emerald-400/[0.08]"
-                    }`}
-                  >
-                    {q.label}
-                  </button>
-                ))}
-                <span className="qx-mono text-[9px] text-slate-600 ml-auto shrink-0 hidden md:block">
-                  press <kbd className="text-slate-500 border border-border rounded-sm px-1">/</kbd> to focus
-                </span>
+              {/* ── Quick commands & Filter bar ── */}
+              <div className="px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto qx-scroll relative z-10 border-t border-border-subtle bg-black/20 backdrop-blur-md">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="qx-display text-[8px] font-bold uppercase tracking-[0.22em] text-slate-500 shrink-0 mr-0.5 hidden xs:inline">
+                    Quick
+                  </span>
+                  {QUICK_COMMANDS.map((q) => (
+                    <button
+                      key={q.cmd}
+                      type="button"
+                      onClick={() => {
+                        setCommand(q.cmd);
+                        inputRef.current?.focus();
+                      }}
+                      className={`qx-mono text-[10px] px-2.5 py-1 rounded-lg border whitespace-nowrap transition-all duration-200 shrink-0 ${
+                        q.danger
+                          ? "text-rose-400/90 border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20"
+                          : "text-slate-300 border-border/80 bg-muted/60 hover:border-emerald-400/40 hover:bg-emerald-400/[0.08]"
+                      }`}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Filter Tabs */}
+                <div className="flex items-center gap-1 shrink-0 pl-2 border-l border-border-subtle">
+                  {FILTERS.map((f) => {
+                    const count = counts[f.key];
+                    const isActive = filter === f.key;
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => setFilter(f.key)}
+                        aria-label={`Filter console logs by ${f.label} (${count})`}
+                        className={`qx-mono text-[10px] px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all ${
+                          isActive
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-semibold"
+                            : "text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5"
+                        }`}
+                      >
+                        <span>{f.label}</span>
+                        {count > 0 && (
+                          <span
+                            className={`text-[9px] px-1 py-0.2 rounded-full font-bold ${
+                              isActive
+                                ? "bg-emerald-400/30 text-emerald-200"
+                                : "bg-white/10 text-slate-400"
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* ── Command bar ── */}
