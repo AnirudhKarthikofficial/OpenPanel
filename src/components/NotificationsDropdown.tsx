@@ -150,7 +150,11 @@ export default function NotificationsDropdown() {
 
       {/* Notifications Panel Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div
+          role="region"
+          aria-label="Notifications panel"
+          className="absolute right-0 mt-2 w-80 sm:w-96 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+        >
           {/* Header */}
           <div className="p-4 border-b border-border/60 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -165,6 +169,7 @@ export default function NotificationsDropdown() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
+                  aria-label="Mark all notifications as read"
                   className="text-xs text-muted-foreground hover:text-indigo-400 transition-colors flex items-center gap-1"
                   title="Mark all as read"
                 >
@@ -175,6 +180,7 @@ export default function NotificationsDropdown() {
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
+                  aria-label="Clear all notifications"
                   className="text-xs text-muted-foreground hover:text-rose-400 transition-colors p-1 rounded-md hover:bg-muted"
                   title="Clear all notifications"
                 >
@@ -185,9 +191,11 @@ export default function NotificationsDropdown() {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center px-4 pt-2 pb-1 border-b border-border/40 gap-2 bg-muted/30">
+          <div className="flex items-center px-4 pt-2 pb-1 border-b border-border/40 gap-2 bg-muted/30" role="tablist" aria-label="Notification filters">
             <button
               onClick={() => setFilter("all")}
+              role="tab"
+              aria-selected={filter === "all"}
               className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all ${
                 filter === "all"
                   ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
@@ -198,6 +206,8 @@ export default function NotificationsDropdown() {
             </button>
             <button
               onClick={() => setFilter("unread")}
+              role="tab"
+              aria-selected={filter === "unread"}
               className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all ${
                 filter === "unread"
                   ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
@@ -255,6 +265,7 @@ export default function NotificationsDropdown() {
                   {/* Close/delete button */}
                   <button
                     onClick={(e) => deleteNotification(notif.id, e)}
+                    aria-label={`Dismiss notification: ${notif.title}`}
                     className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Dismiss"
                   >
