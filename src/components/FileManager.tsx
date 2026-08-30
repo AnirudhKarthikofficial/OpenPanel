@@ -640,7 +640,11 @@ export default function FileManager({ serverId }: { serverId: string }) {
               {/* Table Header */}
               {filteredFiles.length > 0 && (
                 <div className="flex items-center px-4 py-2.5 mb-2 border-b border-border/50 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <button onClick={toggleSelectAll} className="mr-3 transition-colors hover:text-foreground">
+                  <button
+                    onClick={toggleSelectAll}
+                    aria-label={selectedFiles.size === filteredFiles.length ? "Deselect all items" : "Select all items"}
+                    className="mr-3 transition-colors hover:text-foreground"
+                  >
                     {selectedFiles.size === filteredFiles.length ? (
                       <CheckSquare size={18} className="text-indigo-400" />
                     ) : (
@@ -679,6 +683,7 @@ export default function FileManager({ serverId }: { serverId: string }) {
                     <div className="flex items-center space-x-3 flex-1 overflow-hidden">
                       <button 
                         onClick={(e) => toggleSelectFile(f.name, e)} 
+                        aria-label={isSelected ? `Deselect ${f.isDirectory ? 'folder' : 'file'} ${f.name}` : `Select ${f.isDirectory ? 'folder' : 'file'} ${f.name}`}
                         className={`transition-colors shrink-0 ${isSelected ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-400'}`}
                       >
                         {isSelected ? <CheckSquare size={18} /> : <Square size={18} />}
