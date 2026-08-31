@@ -134,14 +134,16 @@ export default function NotificationsDropdown() {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
-        className={`p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all relative ${
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        className={`p-2 text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg transition-all relative ${
           isOpen ? "bg-muted text-foreground" : ""
         }`}
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-3 w-3">
+          <span className="absolute top-1 right-1 flex h-3 w-3" aria-hidden="true">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500 border-2 border-card"></span>
           </span>
@@ -150,7 +152,11 @@ export default function NotificationsDropdown() {
 
       {/* Notifications Panel Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div
+          role="region"
+          aria-label="Notifications panel"
+          className="absolute right-0 mt-2 w-80 sm:w-96 bg-card/95 backdrop-blur-2xl border border-border/80 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+        >
           {/* Header */}
           <div className="p-4 border-b border-border/60 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -165,30 +171,35 @@ export default function NotificationsDropdown() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-muted-foreground hover:text-indigo-400 transition-colors flex items-center gap-1"
+                  aria-label="Mark all notifications as read"
+                  className="text-xs text-muted-foreground hover:text-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1 transition-colors flex items-center gap-1"
                   title="Mark all as read"
                 >
-                  <Check size={12} />
+                  <Check size={12} aria-hidden="true" />
                   Mark read
                 </button>
               )}
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
-                  className="text-xs text-muted-foreground hover:text-rose-400 transition-colors p-1 rounded-md hover:bg-muted"
+                  aria-label="Clear all notifications"
+                  className="text-xs text-muted-foreground hover:text-rose-400 focus-visible:ring-2 focus-visible:ring-rose-500 transition-colors p-1 rounded-md hover:bg-muted"
                   title="Clear all notifications"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={13} aria-hidden="true" />
                 </button>
               )}
             </div>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center px-4 pt-2 pb-1 border-b border-border/40 gap-2 bg-muted/30">
+          <div role="tablist" aria-label="Notification filters" className="flex items-center px-4 pt-2 pb-1 border-b border-border/40 gap-2 bg-muted/30">
             <button
+              role="tab"
+              aria-selected={filter === "all"}
+              aria-label={`All notifications (${notifications.length})`}
               onClick={() => setFilter("all")}
-              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all ${
+              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                 filter === "all"
                   ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
                   : "text-muted-foreground hover:text-foreground"
@@ -197,8 +208,11 @@ export default function NotificationsDropdown() {
               All ({notifications.length})
             </button>
             <button
+              role="tab"
+              aria-selected={filter === "unread"}
+              aria-label={`Unread notifications (${unreadCount})`}
               onClick={() => setFilter("unread")}
-              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all ${
+              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                 filter === "unread"
                   ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
                   : "text-muted-foreground hover:text-foreground"
@@ -209,10 +223,10 @@ export default function NotificationsDropdown() {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-[360px] overflow-y-auto divide-y divide-border/40 custom-scrollbar">
+          <div className="max-h-[360px] overflow-y-auto divide-y divide-border/40 custom-scrollbar" aria-live="polite">
             {filteredNotifications.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
-                <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" aria-hidden="true" />
                 <p className="text-xs font-medium">No notifications found</p>
                 <p className="text-[11px] text-muted-foreground/70 mt-1">
                   {filter === "unread" ? "You have read all your alerts!" : "All caught up."}
@@ -222,12 +236,21 @@ export default function NotificationsDropdown() {
               filteredNotifications.map((notif) => (
                 <div
                   key={notif.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${notif.read ? "Read notification" : "Unread notification"}: ${notif.title}. ${notif.message}`}
                   onClick={() => handleNotificationClick(notif)}
-                  className={`p-3.5 flex items-start gap-3 transition-all cursor-pointer group hover:bg-muted/60 relative ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleNotificationClick(notif);
+                    }
+                  }}
+                  className={`p-3.5 flex items-start gap-3 transition-all cursor-pointer group hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none relative ${
                     !notif.read ? "bg-indigo-500/[0.04]" : ""
                   }`}
                 >
-                  <div className="mt-0.5">{getTypeIcon(notif.type)}</div>
+                  <div className="mt-0.5" aria-hidden="true">{getTypeIcon(notif.type)}</div>
                   <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center justify-between gap-2">
                       <p className={`text-xs font-semibold truncate ${!notif.read ? "text-foreground" : "text-muted-foreground"}`}>
@@ -242,23 +265,24 @@ export default function NotificationsDropdown() {
                     </p>
                     {notif.link && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-400 mt-1.5 opacity-80 group-hover:opacity-100">
-                        View details <ExternalLink size={10} />
+                        View details <ExternalLink size={10} aria-hidden="true" />
                       </span>
                     )}
                   </div>
 
                   {/* Unread dot */}
                   {!notif.read && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-1.5" aria-hidden="true" />
                   )}
 
                   {/* Close/delete button */}
                   <button
                     onClick={(e) => deleteNotification(notif.id, e)}
-                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Dismiss notification: ${notif.title}`}
+                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Dismiss"
                   >
-                    <X size={12} />
+                    <X size={12} aria-hidden="true" />
                   </button>
                 </div>
               ))
