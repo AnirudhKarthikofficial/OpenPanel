@@ -134,7 +134,9 @@ export default function NotificationsDropdown() {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         className={`p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all relative ${
           isOpen ? "bg-muted text-foreground" : ""
         }`}
@@ -144,6 +146,7 @@ export default function NotificationsDropdown() {
           <span className="absolute top-1 right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500 border-2 border-card"></span>
+            <span className="sr-only">{unreadCount} unread notifications</span>
           </span>
         )}
       </button>
@@ -175,6 +178,7 @@ export default function NotificationsDropdown() {
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
+                  aria-label="Clear all notifications"
                   className="text-xs text-muted-foreground hover:text-rose-400 transition-colors p-1 rounded-md hover:bg-muted"
                   title="Clear all notifications"
                 >
@@ -255,7 +259,8 @@ export default function NotificationsDropdown() {
                   {/* Close/delete button */}
                   <button
                     onClick={(e) => deleteNotification(notif.id, e)}
-                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Dismiss notification: ${notif.title}`}
+                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                     title="Dismiss"
                   >
                     <X size={12} />
