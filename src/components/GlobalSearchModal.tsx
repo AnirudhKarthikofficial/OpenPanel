@@ -203,6 +203,7 @@ export default function GlobalSearchModal() {
         onClick={() => setIsOpen(true)}
         className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
         title="Search"
+        aria-label="Search"
       >
         <Search size={20} />
       </button>
@@ -215,7 +216,7 @@ export default function GlobalSearchModal() {
             onClick={() => setIsOpen(false)} 
           />
 
-          <div className="relative w-full max-w-2xl bg-card/95 border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150">
+          <div role="dialog" aria-modal="true" aria-label="Global search" className="relative w-full max-w-2xl bg-card/95 border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150">
             {/* Input Bar */}
             <div className="relative flex items-center border-b border-border/60 px-4 py-3 bg-card">
               <Search className="w-5 h-5 text-indigo-400 shrink-0 mr-3" />
@@ -234,6 +235,8 @@ export default function GlobalSearchModal() {
                 <button 
                   onClick={() => setQuery("")}
                   className="p-1 text-muted-foreground hover:text-foreground rounded-md mr-1"
+                  title="Clear search query"
+                  aria-label="Clear search query"
                 >
                   <X size={16} />
                 </button>
