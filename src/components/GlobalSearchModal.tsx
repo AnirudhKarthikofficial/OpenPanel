@@ -182,25 +182,28 @@ export default function GlobalSearchModal() {
   return (
     <>
       {/* Header Search Trigger Bar */}
-      <div 
+      <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="relative hidden md:flex items-center w-64 group cursor-pointer"
+        aria-label="Search servers, settings, navigation (Ctrl+K)"
+        aria-expanded={isOpen}
+        className="relative hidden md:flex items-center w-64 group cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-xl"
       >
         <Search className="absolute left-3 w-4 h-4 text-muted-foreground group-hover:text-indigo-400 transition-colors pointer-events-none" />
-        <input 
-          type="text" 
-          readOnly
-          placeholder="Search... (Ctrl+K)" 
-          className="w-full bg-muted/80 border border-border-subtle hover:border-indigo-500/50 rounded-xl pl-9 pr-12 py-1.5 text-xs text-foreground cursor-pointer outline-none transition-all shadow-sm"
-        />
+        <span className="w-full bg-muted/80 border border-border-subtle group-hover:border-indigo-500/50 rounded-xl pl-9 pr-12 py-1.5 text-xs text-muted-foreground transition-all shadow-sm block truncate">
+          Search... (Ctrl+K)
+        </span>
         <div className="absolute right-2.5 flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-card border border-border-subtle rounded-md shadow-xs pointer-events-none">
           <span className="text-[9px]">⌘</span>K
         </div>
-      </div>
+      </button>
 
       {/* Mobile Search Icon Button */}
       <button 
+        type="button"
         onClick={() => setIsOpen(true)}
+        aria-label="Search"
+        aria-expanded={isOpen}
         className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
         title="Search"
       >
@@ -209,7 +212,12 @@ export default function GlobalSearchModal() {
 
       {/* Full Modal Command Palette Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Global search"
+        >
           <div 
             className="fixed inset-0" 
             onClick={() => setIsOpen(false)} 
@@ -223,6 +231,7 @@ export default function GlobalSearchModal() {
                 ref={inputRef}
                 type="text"
                 value={query}
+                aria-label="Search query"
                 onChange={(e) => {
                   setQuery(e.target.value);
                   setSelectedIndex(0);
@@ -232,14 +241,18 @@ export default function GlobalSearchModal() {
               />
               {query && (
                 <button 
+                  type="button"
                   onClick={() => setQuery("")}
+                  aria-label="Clear search query"
                   className="p-1 text-muted-foreground hover:text-foreground rounded-md mr-1"
                 >
                   <X size={16} />
                 </button>
               )}
               <button 
+                type="button"
                 onClick={() => setIsOpen(false)}
+                aria-label="Close search"
                 className="p-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
               >
                 ESC
@@ -247,7 +260,7 @@ export default function GlobalSearchModal() {
             </div>
 
             {/* Results List */}
-            <div className="overflow-y-auto p-2 space-y-1 custom-scrollbar max-h-[420px]">
+            <div role="listbox" aria-label="Search results" className="overflow-y-auto p-2 space-y-1 custom-scrollbar max-h-[420px]">
               {isLoading ? (
                 <div className="p-8 text-center text-xs text-muted-foreground">
                   Searching servers and system...
@@ -266,6 +279,8 @@ export default function GlobalSearchModal() {
                   return (
                     <div
                       key={item.id}
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => handleSelect(item)}
                       onMouseEnter={() => setSelectedIndex(idx)}
                       className={`flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer ${
