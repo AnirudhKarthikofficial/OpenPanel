@@ -182,27 +182,28 @@ export default function GlobalSearchModal() {
   return (
     <>
       {/* Header Search Trigger Bar */}
-      <div 
+      <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="relative hidden md:flex items-center w-64 group cursor-pointer"
+        aria-label="Search servers, settings, and navigation (Ctrl+K)"
+        className="relative hidden md:flex items-center w-64 group cursor-pointer text-left rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
         <Search className="absolute left-3 w-4 h-4 text-muted-foreground group-hover:text-indigo-400 transition-colors pointer-events-none" />
-        <input 
-          type="text" 
-          readOnly
-          placeholder="Search... (Ctrl+K)" 
-          className="w-full bg-muted/80 border border-border-subtle hover:border-indigo-500/50 rounded-xl pl-9 pr-12 py-1.5 text-xs text-foreground cursor-pointer outline-none transition-all shadow-sm"
-        />
+        <span className="w-full bg-muted/80 border border-border-subtle group-hover:border-indigo-500/50 rounded-xl pl-9 pr-12 py-1.5 text-xs text-muted-foreground transition-all shadow-sm select-none">
+          Search... (Ctrl+K)
+        </span>
         <div className="absolute right-2.5 flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-card border border-border-subtle rounded-md shadow-xs pointer-events-none">
           <span className="text-[9px]">⌘</span>K
         </div>
-      </div>
+      </button>
 
       {/* Mobile Search Icon Button */}
       <button 
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+        className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         title="Search"
+        aria-label="Search"
       >
         <Search size={20} />
       </button>
@@ -213,9 +214,15 @@ export default function GlobalSearchModal() {
           <div 
             className="fixed inset-0" 
             onClick={() => setIsOpen(false)} 
+            aria-hidden="true"
           />
 
-          <div className="relative w-full max-w-2xl bg-card/95 border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Global search"
+            className="relative w-full max-w-2xl bg-card/95 border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150"
+          >
             {/* Input Bar */}
             <div className="relative flex items-center border-b border-border/60 px-4 py-3 bg-card">
               <Search className="w-5 h-5 text-indigo-400 shrink-0 mr-3" />
@@ -227,19 +234,24 @@ export default function GlobalSearchModal() {
                   setQuery(e.target.value);
                   setSelectedIndex(0);
                 }}
+                aria-label="Search input"
                 placeholder="Search servers, settings, navigation..."
                 className="w-full bg-transparent text-sm sm:text-base text-foreground outline-none placeholder:text-muted-foreground"
               />
               {query && (
                 <button 
+                  type="button"
                   onClick={() => setQuery("")}
+                  aria-label="Clear search input"
                   className="p-1 text-muted-foreground hover:text-foreground rounded-md mr-1"
                 >
                   <X size={16} />
                 </button>
               )}
               <button 
+                type="button"
                 onClick={() => setIsOpen(false)}
+                aria-label="Close search modal"
                 className="p-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
               >
                 ESC
