@@ -222,8 +222,16 @@ export default function NotificationsDropdown() {
               filteredNotifications.map((notif) => (
                 <div
                   key={notif.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleNotificationClick(notif)}
-                  className={`p-3.5 flex items-start gap-3 transition-all cursor-pointer group hover:bg-muted/60 relative ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleNotificationClick(notif);
+                    }
+                  }}
+                  className={`p-3.5 flex items-start gap-3 transition-all cursor-pointer group hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 relative ${
                     !notif.read ? "bg-indigo-500/[0.04]" : ""
                   }`}
                 >
@@ -255,7 +263,8 @@ export default function NotificationsDropdown() {
                   {/* Close/delete button */}
                   <button
                     onClick={(e) => deleteNotification(notif.id, e)}
-                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Dismiss notification: ${notif.title}`}
+                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 transition-opacity"
                     title="Dismiss"
                   >
                     <X size={12} />
