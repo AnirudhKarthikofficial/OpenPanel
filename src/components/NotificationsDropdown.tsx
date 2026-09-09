@@ -175,7 +175,8 @@ export default function NotificationsDropdown() {
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
-                  className="text-xs text-muted-foreground hover:text-rose-400 transition-colors p-1 rounded-md hover:bg-muted"
+                  aria-label="Clear all notifications"
+                  className="text-xs text-muted-foreground hover:text-rose-400 transition-colors p-1 rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                   title="Clear all notifications"
                 >
                   <Trash2 size={13} />
@@ -255,7 +256,8 @@ export default function NotificationsDropdown() {
                   {/* Close/delete button */}
                   <button
                     onClick={(e) => deleteNotification(notif.id, e)}
-                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Dismiss notification: ${notif.title}`}
+                    className="absolute right-2 top-2 p-1 text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-opacity"
                     title="Dismiss"
                   >
                     <X size={12} />
